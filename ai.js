@@ -5,13 +5,12 @@ const part2 = "UL8zzVaJXx4n2wc09eCy2VYNPQ";
 const API_KEY = part1 + part2;
 
 async function askAI(userMessage) {
-    // التحديث للموديل المطلوب مباشرة: gemini-3.6-flash
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent?key=${API_KEY}`;
 
     const systemPrompt = `أنت خبير محترف ومحرك ذكي متخصص في لغة Luau وبيئة Roblox Studio.
 شروط الإجابة:
 1. قم بفحص الكود والتحقق من صحته برمجياً بنسبة 100% قبل إرساله.
-2. قدم الكود بشكل يسهل نسخه واستخدامه في Roblox Studio مباشرة.
+2. ضع الأكواد دائماً داخل أقواس التنسيق الثلاثية \`\`\`luau ... \`\`\`.
 3. أجب بدقة ووضوح وبأسلوب مباشر.`;
 
     try {
@@ -31,7 +30,8 @@ async function askAI(userMessage) {
         const data = await response.json();
 
         if (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text) {
-            appendMessage(data.candidates[0].content.parts[0].text, "ai");
+            const rawText = data.candidates[0].content.parts[0].text;
+            renderAIResponse(rawText);
         } else if (data.error) {
             appendMessage(`⚠️ خطأ من API: ${data.error.message}`, "ai");
         } else {
@@ -41,4 +41,57 @@ async function askAI(userMessage) {
         console.error("API Fetch Error:", error);
         appendMessage("❌ تعذر الاتصال بالخادم. تحقق من الاتصال بالإنترنت.", "ai");
     }
+}
+
+// دالة عرض الاستجابة مع زر النسخ والتنسيق الاحترافي
+function renderAIResponse(fullText) {
+    const chatContainer = document.querySelector('.chat-messages') || document.body;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message ai-message';
+    
+    // تحويل مقاطع الكود إلى واجهة احترافية تحتوي على زر نسخ
+    let formattedText = fullText.replace(/```(?:luau|lua)?\n([\s\S]*?)```/g, (match, code) => {
+        const cleanCode = code.replace(/"/g, '&quot;');
+        return `
+            <div class="code-container">
+                <div class="code-header">
+                    <span>Luau Script</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 نسخ الكود</button>
+                </div>
+                <pre><code>${cleanCode}</code></pre>
+            </div>
+        `;
+    });
+
+    chatContainer.appendChild(msgDiv);
+
+    // تأثير الكتابة التدريجية للرد
+    let i = 0;
+    msgDiv.innerHTML = "";
+    
+    // إذا كان يحتوي على أكواد نقوم بإظهاره مباشرة لضمان أداء واجهة الكود
+    if (formattedText.includes('code-container')) {
+        msgDiv.innerHTML = formattedText;
+    } else {
+        const timer = setInterval(() => {
+            msgDiv.innerHTML = formattedText.slice(0, i);
+            i++;
+            if (i > formattedText.length) clearInterval(timer);
+        }, 15);
+    }
+}
+
+// دالة نسخ الكود المربوطة بالزر
+function copyCode(button) {
+    const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+    const textToCopy = codeBlock.innerText;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        button.innerText = "✅ تم النسخ!";
+        button.style.background = "#22c55e";
+        setTimeout(() => {
+            button.innerText = "📋 نسخ الكود";
+            button.style.background = "#3b82f6";
+        }, 2000);
+    });
 }
