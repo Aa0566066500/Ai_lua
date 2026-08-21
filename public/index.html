@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Lua AI - مساعد ذكاء اصطناعي متخصص في Lua وLuau وRoblox Studio"
+    >
+
+    <meta
+        name="theme-color"
+        content="#0b0b0f"
+    >
+
+    <title>Lua AI</title>
+
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <div id="app">
+
+        <!-- Sidebar -->
+
+        <aside
+            class="sidebar"
+            id="sidebar"
+        >
+
+            <div class="sidebar-header">
+
+                <div class="brand">
+
+                    <div class="brand-icon">
+                        ✦
+                    </div>
+
+                    <div class="brand-text">
+
+                        <strong>
+                            Lua AI
+                        </strong>
+
+                        <span>
+                            Roblox Assistant
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <button
+                    class="icon-button mobile-close"
+                    id="closeSidebar"
+                    aria-label="إغلاق القائمة"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <button
+                class="new-chat-button"
+                id="newChatButton"
+            >
+
+                <span class="new-chat-icon">
+                    +
+                </span>
+
+                <span>
+                    محادثة جديدة
+                </span>
+
+            </button>
+
+
+            <div class="sidebar-section">
+
+                <div class="sidebar-title">
+                    المحادثات
+                </div>
+
+                <div
+                    class="conversation-list"
+                    id="conversationList"
+                ></div>
+
+            </div>
+
+
+            <div class="sidebar-bottom">
+
+                <button
+                    class="sidebar-action"
+                    id="settingsButton"
+                >
+
+                    <span>
+                        ⚙
+                    </span>
+
+                    <span>
+                        الإعدادات
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="sidebar-action"
+                    id="helpButton"
+                >
+
+                    <span>
+                        ?
+                    </span>
+
+                    <span>
+                        المساعدة
+                    </span>
+
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Main -->
+
+        <main class="main">
+
+            <!-- Topbar -->
+
+            <header class="topbar">
+
+                <button
+                    class="icon-button menu-button"
+                    id="openSidebar"
+                    aria-label="فتح القائمة"
+                >
+                    ☰
+                </button>
+
+
+                <div class="model-selector">
+
+                    <button
+                        class="model-button"
+                        id="modelButton"
+                        aria-expanded="false"
+                    >
+
+                        <span class="model-name">
+                            Lua AI
+                        </span>
+
+                        <span class="model-badge">
+                            Pro
+                        </span>
+
+                        <span class="model-arrow">
+                            ▾
+                        </span>
+
+                    </button>
+
+
+                    <div
+                        class="model-menu hidden"
+                        id="modelMenu"
+                    >
+
+                        <button
+                            class="model-option active"
+                            data-model="lua"
+                        >
+
+                            <strong>
+                                Lua AI
+                            </strong>
+
+                            <small>
+                                متخصص في Roblox وLuau
+                            </small>
+
+                        </button>
+
+
+                        <button
+                            class="model-option"
+                            data-model="general"
+                        >
+
+                            <strong>
+                                General AI
+                            </strong>
+
+                            <small>
+                                مساعد عام
+                            </small>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="topbar-actions">
+
+                    <button
+                        class="icon-button"
+                        id="shareButton"
+                        title="مشاركة"
+                    >
+                        ↗
+                    </button>
+
+
+                    <button
+                        class="icon-button"
+                        id="moreButton"
+                        title="المزيد"
+                    >
+                        ⋯
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- Chat -->
+
+            <section
+                class="chat-container"
+                id="chatContainer"
+            >
+
+                <!-- Welcome -->
+
+                <div
+                    class="welcome-screen"
+                    id="welcomeScreen"
+                >
+
+                    <div class="welcome-icon">
+                        ✦
+                    </div>
+
+
+                    <h1>
+                        وش تبي نبني اليوم؟
+                    </h1>
+
+
+                    <p>
+                        مساعدك الذكي لبرمجة
+                        <strong>
+                            Lua وRoblox Studio
+                        </strong>
+                    </p>
+
+
+                    <div class="quick-prompts">
+
+                        <button
+                            class="prompt-card"
+                            data-prompt="اكتب لي نظام RemoteEvent آمن في Roblox Studio واشرح لي أين أضع كل ملف."
+                        >
+
+                            <span class="prompt-icon">
+                                🛡
+                            </span>
+
+                            <span>
+                                نظام RemoteEvent آمن
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="prompt-card"
+                            data-prompt="اشرح لي Luau من الصفر بطريقة سهلة مع أمثلة عملية."
+                        >
+
+                            <span class="prompt-icon">
+                                📚
+                            </span>
+
+                            <span>
+                                تعلم Luau
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="prompt-card"
+                            data-prompt="راجع هذا الكود وابحث عن الأخطاء والثغرات الأمنية وحسنه."
+                        >
+
+                            <span class="prompt-icon">
+                                🔍
+                            </span>
+
+                            <span>
+                                فحص الكود
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="prompt-card"
+                            data-prompt="صمم لي نظام كامل للعبة Roblox واشرح لي ترتيب الملفات والسكريبتات."
+                        >
+
+                            <span class="prompt-icon">
+                                ⚡
+                            </span>
+
+                            <span>
+                                بناء نظام كامل
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Messages -->
+
+                <div
+                    class="messages"
+                    id="messages"
+                ></div>
+
+
+                <!-- Typing -->
+
+                <div
+                    class="typing-container hidden"
+                    id="typingContainer"
+                >
+
+                    <div class="ai-avatar">
+                        ✦
+                    </div>
+
+
+                    <div class="typing-content">
+
+                        <span class="typing-text">
+                            يفكر...
+                        </span>
+
+
+                        <div class="typing-dots">
+
+                            <span></span>
+                            <span></span>
+                            <span></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- Composer -->
+
+            <footer class="composer-area">
+
+                <div class="composer-wrapper">
+
+
+                    <div
+                        class="attachment-menu hidden"
+                        id="attachmentMenu"
+                    >
+
+                        <button id="uploadCode">
+                            📄 رفع ملف كود
+                        </button>
+
+                        <button id="pasteCode">
+                            &lt;/&gt; لصق كود
+                        </button>
+
+                    </div>
+
+
+                    <div class="composer">
+
+
+                        <button
+                            class="composer-button"
+                            id="attachmentButton"
+                            title="إضافة"
+                        >
+                            +
+                        </button>
+
+
+                        <textarea
+                            id="messageInput"
+                            rows="1"
+                            maxlength="2000"
+                            placeholder="اسأل عن Lua أو Roblox Studio..."
+                            autocomplete="off"
+                            spellcheck="false"
+                        ></textarea>
+
+
+                        <div class="composer-actions">
+
+
+                            <button
+                                class="composer-tool"
+                                id="voiceButton"
+                                title="الصوت"
+                            >
+                                ◉
+                            </button>
+
+
+                            <button
+                                class="send-button"
+                                id="sendButton"
+                                title="إرسال"
+                                disabled
+                            >
+                                ↑
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="composer-info">
+
+                        <span>
+                            Lua AI يمكن أن يخطئ، تحقق من الكود قبل استخدامه.
+                        </span>
+
+
+                        <span id="characterCounter">
+                            0 / 2000
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </footer>
+
+        </main>
+
+    </div>
+
+
+    <!-- Settings -->
+
+    <div
+        class="modal-overlay hidden"
+        id="settingsModal"
+    >
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <h2>
+                    الإعدادات
+                </h2>
+
+
+                <button
+                    class="icon-button"
+                    id="closeSettings"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="settings-content">
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            المظهر
+                        </strong>
+
+                        <small>
+                            اختر مظهر الموقع
+                        </small>
+
+                    </div>
+
+
+                    <select id="themeSelect">
+
+                        <option value="dark">
+                            داكن
+                        </option>
+
+                        <option value="light">
+                            فاتح
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            اللغة
+                        </strong>
+
+                        <small>
+                            لغة واجهة الموقع
+                        </small>
+
+                    </div>
+
+
+                    <select id="languageSelect">
+
+                        <option value="ar">
+                            العربية
+                        </option>
+
+                        <option value="en">
+                            English
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Hidden file input -->
+
+    <input
+        type="file"
+        id="fileInput"
+        hidden
+        accept=".lua,.luau,.txt,.js,.json,.md"
+    >
+
+
+    <script src="/app.js"></script>
+
+</body>
+
+</html>
