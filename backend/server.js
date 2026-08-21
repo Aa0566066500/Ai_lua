@@ -1,85 +1,162 @@
+"use strict";
+
+require("dotenv").config();
+
 const express = require("express");
+const path = require("path");
+
+const chatRouter = require("./routes/chat");
+const rateLimit = require("./middleware/rateLimit");
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+    Number(process.env.PORT) || 3000;
 
-app.use(express.json({
-    limit: "16kb"
-}));
 
-const MAX_MESSAGE_LENGTH = 2000;
+/* =========================================================
+   SECURITY
+========================================================= */
 
-const cooldown = new Map();
+app.disable("x-powered-by");
 
-function allowedRequest(ip) {
-    const now = Date.now();
-    const previous = cooldown.get(ip) || 0;
 
-    if (now - previous < 1500) {
-        return false;
-    }
+/* =========================================================
+   BODY PARSER
+========================================================= */
 
-    cooldown.set(ip, now);
+app.use(
+    express.json({
+        limit: "1mb"
+    })
+);
 
-    return true;
-}
+app.use(
+    express.urlencoded({
+        extended: true,
+        limit: "1mb"
+    })
+);
 
-app.get("/", (req, res) => {
-    res.json({
-        ok: true,
-        service: "Roblox AI Backend"
-    });
-});
 
-app.post("/api/chat", async (req, res) => {
-    const ip = req.ip;
+/* =========================================================
+   FRONTEND
+========================================================= */
 
-    if (!allowedRequest(ip)) {
-        return res.status(429).json({
-            error: "Too many requests"
+const publicPath =
+    path.join(__dirname, "..", "public");
+
+app.use(
+    express.static(publicPath)
+);
+
+
+/* =========================================================
+   API RATE LIMIT
+========================================================= */
+
+app.use(
+    "/api/chat",
+    rateLimit
+);
+
+
+/* =========================================================
+   CHAT API
+========================================================= */
+
+app.use(
+    "/api/chat",
+    chatRouter
+);
+
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
+app.get(
+    "/api/health",
+    (req, res) => {
+        res.json({
+            ok: true,
+            service: "Roblox Lua AI",
+            status: "online"
         });
     }
+);
 
-    const message = req.body?.message;
 
-    if (typeof message !== "string") {
-        return res.status(400).json({
-            error: "message must be a string"
+/* =========================================================
+   HOME
+========================================================= */
+
+app.get(
+    "/",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                publicPath,
+                "index.html"
+            )
+        );
+    }
+);
+
+
+/* =========================================================
+   API 404
+========================================================= */
+
+app.use(
+    "/api",
+    (req, res) => {
+
+        res.status(404).json({
+            ok: false,
+            error: "API endpoint not found."
         });
     }
+);
 
-    if (message.length === 0) {
-        return res.status(400).json({
-            error: "message is empty"
+
+/* =========================================================
+   GLOBAL ERROR HANDLER
+========================================================= */
+
+app.use(
+    (error, req, res, next) => {
+
+        console.error(
+            "Server Error:",
+            error
+        );
+
+        if (res.headersSent) {
+            return next(error);
+        }
+
+        res.status(500).json({
+            ok: false,
+            error:
+                "حدث خطأ داخلي في الخادم."
         });
     }
+);
 
-    if (message.length > MAX_MESSAGE_LENGTH) {
-        return res.status(400).json({
-            error: "message is too long"
-        });
+
+/* =========================================================
+   START
+========================================================= */
+
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+
+        console.log(
+            `Roblox Lua AI backend running on port ${PORT}`
+        );
     }
-
-    /*
-        هنا سيتم ربط مزود الذكاء الاصطناعي.
-
-        لا تضع API Key داخل Roblox.
-
-        استخدم:
-        process.env.AI_API_KEY
-
-        من ملف .env على السيرفر فقط.
-    */
-
-    return res.json({
-        ok: true,
-        reply: "Backend is working."
-    });
-});
-
-app.listen(PORT, () => {
-    console.log(
-        `Roblox AI backend running on port ${PORT}`
-    );
-});
+);
