@@ -1,57 +1,130 @@
-# Roblox AI Assistant
+# Lua AI
 
-مساعد ذكاء اصطناعي مخصص لمساعدة مطوري Roblox Studio في برمجة Luau.
+مساعد ذكاء اصطناعي متخصص في Lua / Luau وRoblox Studio.
 
-## الهدف
+## الفكرة
 
-المشروع يفصل بين:
+Lua AI هو موقع دردشة يساعد مطوري Roblox على:
 
-- Roblox Client
-- Roblox Server
-- Backend
-- AI Provider
+- كتابة Luau
+- شرح الأكواد
+- إصلاح الأخطاء
+- تحليل المشاريع
+- تصميم الأنظمة
+- تحسين الأداء
+- مراجعة أمان الأكواد
+- شرح Roblox APIs
+- بناء أنظمة Roblox خطوة بخطوة
 
-ولا يتم وضع أي API Key سري داخل Roblox.
+## التقنيات
 
-## البنية
+- HTML
+- CSS
+- JavaScript
+- Node.js
+- Express
+- AI API
+- Git
+- Render
 
-roblox-ai/
+## Structure
+
+lua-ai/
 ├── README.md
 ├── .gitignore
 ├── .env.example
 ├── backend/
 │   ├── package.json
-│   └── server.js
-└── roblox/
-    ├── ReplicatedStorage/
-    │   ├── AIConfig.lua
-    │   └── AIClient.lua
-    ├── ServerScriptService/
-    │   └── AIServer.server.lua
-    └── StarterPlayer/
-        └── StarterPlayerScripts/
-            └── AIClient.client.lua
+│   ├── server.js
+│   ├── routes/
+│   │   └── chat.js
+│   ├── services/
+│   │   └── ai.js
+│   ├── middleware/
+│   │   ├── rateLimit.js
+│   │   └── validation.js
+│   └── utils/
+│       └── errors.js
+└── public/
+    ├── index.html
+    ├── style.css
+    └── app.js
 
-## الأمان
+## Environment Variables
 
-لا تضع API Keys أو Secrets داخل:
+لا تضع API Key داخل Git.
 
-- LocalScript
-- ModuleScript داخل ReplicatedStorage
+في Render أضف Environment Variable:
+
+AI_API_KEY=YOUR_REAL_API_KEY
+
+ويمكن استخدام:
+
+PORT=3000
+
+## Security
+
+المفتاح السري لا يوضع داخل:
+
+- HTML
+- CSS
+- JavaScript الموجود في المتصفح
+- GitHub
+- README
+- `.env.example`
+
+المفتاح يبقى في Backend / Render Environment Variables.
+
+## Deployment
+
+المشروع مصمم للعمل مع Render.
+
+Build Command:
+
+npm install
+
+Start Command:
+
+npm start
+
+إذا كان مجلد Backend هو Root Directory:
+
+backend
+
+## AI
+
+المساعد مخصص لفهم:
+
+- Luau
+- Roblox Studio
+- RemoteEvents
+- RemoteFunctions
+- ModuleScripts
+- ServerScriptService
+- ReplicatedStorage
 - StarterPlayer
 - StarterGui
-- GitHub
+- Workspace
+- DataStoreService
+- MemoryStoreService
+- HttpService
+- TweenService
+- RunService
+- Players
+- UserInputService
+- ContextActionService
+- UI
+- NPCs
+- Tools
+- Inventories
+- Trading systems
+- Game systems
+- Debugging
+- Optimization
+- Security
 
-المفتاح السري يجب أن يبقى في Backend.
+## Important
 
-## طريقة الاتصال
+AI يمكن أن يخطئ.
 
-Roblox Client
-      ↓
-Roblox Server
-      ↓
-Backend
-      ↓
-AI Provider
-
-لا يتم إرسال API Key إلى اللاعب.
+راجع الأكواد واختبرها داخل Roblox Studio قبل استخدامها في مشروع حقيقي.
