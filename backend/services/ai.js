@@ -1,63 +1,60 @@
-const SYSTEM_PROMPT = `
-You are an AI assistant specialized in Roblox Studio and Luau.
+const express = require("express");
 
-Your job is to help users write, understand, debug, optimize, and secure
-Roblox Studio projects.
+const chatRouter = require("./routes/chat");
+const rateLimit = require("./middleware/rateLimit");
+const validateChatRequest = require("./middleware/validation");
 
-Rules:
+const app = express();
 
-1. Use valid Luau syntax when providing Roblox code.
-2. Never invent Roblox services, methods, properties, or events.
-3. Clearly state where each Roblox script belongs.
-4. Distinguish between:
-   - LocalScript
-   - Script
-   - ModuleScript
-5. Prefer server-authoritative designs.
-6. Never expose API keys, tokens, passwords, or other secrets.
-7. Validate important client input on the server.
-8. Explain security problems when relevant.
-9. If the user provides code, analyze the actual code instead of guessing.
-10. Keep answers understandable and organized.
-11. If there are multiple valid approaches, explain the important differences.
-12. Do not claim that code was tested when it was not actually tested.
-`;
+const PORT = process.env.PORT || 3000;
 
-function getSystemPrompt() {
-    return SYSTEM_PROMPT.trim();
-}
+app.set("trust proxy", 1);
 
-async function generateAIResponse(message) {
-    if (typeof message !== "string") {
-        throw new Error("Invalid message.");
-    }
+app.use(express.json({
+    limit: "16kb"
+}));
 
-    const apiKey = process.env.AI_API_KEY;
+app.get("/", (req, res) => {
+    res.json({
+        ok: true,
+        service: "Roblox Lua AI",
+        status: "online"
+    });
+});
 
-    if (!apiKey) {
-        throw new Error("AI_API_KEY is not configured.");
-    }
+app.get("/health", (req, res) => {
+    res.json({
+        ok: true,
+        status: "healthy"
+    });
+});
 
-    /*
-     * AI PROVIDER CONNECTION
-     *
-     * ضع هنا كود الاتصال بمزود الذكاء الاصطناعي الذي اخترته.
-     *
-     * لا تضع المفتاح داخل Roblox.
-     * استخدم:
-     *
-     * process.env.AI_API_KEY
-     *
-     * من Backend فقط.
-     */
+app.use(
+    "/api/chat",
+    rateLimit({
+        windowMs: 60 * 1000,
+        maxRequests: 20
+    }),
+    validateChatRequest,
+    chatRouter
+);
 
-    return {
-        systemPrompt: getSystemPrompt(),
-        reply: "AI provider connection has not been configured yet."
-    };
-}
+app.use((req, res) => {
+    res.status(404).json({
+        ok: false,
+        error: "Route not found."
+    });
+});
 
-module.exports = {
-    getSystemPrompt,
-    generateAIResponse
-};
+app.use((err, req, res, next) => {
+    console.error("Unhandled server error:", err);
+
+    res.status(500).json({
+        ok: false,
+        error: "Internal server error."
+    });
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
