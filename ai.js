@@ -1,56 +1,38 @@
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+// جلب المفتاح المربوط بأمان عبر بيئة التشغيل أو متغير عام
+const API_KEY = window.GEMINI_API_KEY || "";
 
-const API_KEY = "YOUR_GEMINI_API_KEY";
-const genAI = new GoogleGenerativeAI(API_KEY);
+async function askAI(userMessage) {
+    const systemPrompt = `
+    أنت خبير محترف ومحرك ذكي متخصص في لغة Luau وبيئة Roblox Studio.
+    شروط الإجابة:
+    1. قم بفحص الكود والتحقق من صحته برمجياً بنسبة 100% قبل إرساله.
+    2. قدم الكود بشكل يسهل نسخه واستخدامه في Roblox Studio مباشرة.
+    3. إذا كان السؤال عاماً، أجب بدقة ووضوح وبأسلوب بسيط.
+    `;
 
-const JAILBREAK_PATTERNS = [
-  /ignore previous instructions/i,
-  /تجاهل التعليمات السابقة/i,
-  /dan mode/i,
-  /bypass/i
-];
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                contents: [{
+                    role: "user",
+                    parts: [{ text: systemPrompt + "\n\nسؤال المستخدم: " + userMessage }]
+                }]
+            })
+        });
 
-const MODES = {
-  default: {
-    systemInstruction: `
-      أنت Luau Studio AI - المساعد الذكي الاحترافي المخصص للدردشة والبرمجة.
-      مهامك وأسلوبك:
-      1. السواليف والمحادثة: تدردش وتجيب على الأسئلة العامة بأسلوب ممتع، مرن، واحترافي.
-      2. التفكير الشامل والربط: عند تقديم أي مشكلة أو سكريبت، تقوم بفحص التعارضات بين الأكواد والتأكد من توافقية المكونات مع بعضها.
-      3. تصحيح الأخطاء: تفحص الكود بدقة لتكتشف الأخطاء البرمجية (Bugs) والأخطاء المنطقية وتصلحها فوراً.
-      4. الاحترافية المباشرة: تزود المستخدم بأفضل الممارسات (Best Practices) في Roblox Luau مع شرح مبسط وعملي.
-    `
-  },
-  flash: {
-    systemInstruction: `
-      أنت Luau Studio AI - المحرك السريع.
-      تفحص الأكواد وتكتشف الأخطاء والتعارضات فوراً، وتقدم الحلول والإجابات بأسلوب خاطف ومباشر جداً بدون مقدمات.
-    `
-  }
-};
+        const data = await response.json();
 
-window.generateAIResponse = async function(prompt, modeKey, onChunk) {
-  const isViolating = JAILBREAK_PATTERNS.some(p => p.test(prompt));
-  if (isViolating) {
-    return "⚠️ عذراً، لا يمكن معالجة هذا الطلب. النظام مخصص لبرمجة Roblox Luau والمحادثات الآمنة فقط.";
-  }
-
-  const selectedMode = MODES[modeKey] || MODES.default;
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: selectedMode.systemInstruction
-  });
-
-  try {
-    const resultStream = await model.generateContentStream(prompt);
-    let fullText = "";
-    for await (const chunk of resultStream.stream) {
-      const text = chunk.text();
-      fullText += text;
-      if (onChunk) onChunk(fullText);
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            appendMessage(data.candidates[0].content.parts[0].text, "ai");
+        } else {
+            appendMessage("⚠️ لم يتم استلام رد صحيح، يرجى التأكد من صلاحية مفتاح API.", "ai");
+        }
+    } catch (error) {
+        console.error("API Error:", error);
+        appendMessage("❌ تعذر الاتصال بالسيرفر. تحقق من الاتصال بالإنترنت.", "ai");
     }
-    return fullText;
-  } catch (err) {
-    return "حدث خطأ أثناء معالجة الطلب، يرجى المحاولة لاحقاً.";
-  }
-};
+}
