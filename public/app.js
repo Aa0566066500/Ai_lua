@@ -1,5 +1,11 @@
 "use strict";
 
+/*
+    =========================================================
+    Lua AI - Frontend
+    =========================================================
+*/
+
 const state = {
     messages: [],
     conversations: [],
@@ -9,106 +15,230 @@ const state = {
     controller: null
 };
 
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
 const elements = {
     sidebar: document.getElementById("sidebar"),
     openSidebar: document.getElementById("openSidebar"),
     closeSidebar: document.getElementById("closeSidebar"),
 
     newChatButton: document.getElementById("newChatButton"),
-    conversationList: document.getElementById("conversationList"),
+    conversationList:
+        document.getElementById("conversationList"),
 
-    messageInput: document.getElementById("messageInput"),
-    sendButton: document.getElementById("sendButton"),
-    messages: document.getElementById("messages"),
-    welcomeScreen: document.getElementById("welcomeScreen"),
+    messageInput:
+        document.getElementById("messageInput"),
 
-    typingContainer: document.getElementById("typingContainer"),
+    sendButton:
+        document.getElementById("sendButton"),
 
-    attachmentButton: document.getElementById("attachmentButton"),
-    attachmentMenu: document.getElementById("attachmentMenu"),
-    uploadCode: document.getElementById("uploadCode"),
-    pasteCode: document.getElementById("pasteCode"),
-    fileInput: document.getElementById("fileInput"),
+    messages:
+        document.getElementById("messages"),
 
-    characterCounter: document.getElementById("characterCounter"),
+    welcomeScreen:
+        document.getElementById("welcomeScreen"),
 
-    modelButton: document.getElementById("modelButton"),
-    modelMenu: document.getElementById("modelMenu"),
+    typingContainer:
+        document.getElementById("typingContainer"),
 
-    settingsButton: document.getElementById("settingsButton"),
-    settingsModal: document.getElementById("settingsModal"),
-    closeSettings: document.getElementById("closeSettings"),
-    themeSelect: document.getElementById("themeSelect"),
-    languageSelect: document.getElementById("languageSelect"),
+    attachmentButton:
+        document.getElementById("attachmentButton"),
 
-    helpButton: document.getElementById("helpButton"),
-    shareButton: document.getElementById("shareButton"),
-    moreButton: document.getElementById("moreButton"),
+    attachmentMenu:
+        document.getElementById("attachmentMenu"),
 
-    voiceButton: document.getElementById("voiceButton")
+    uploadCode:
+        document.getElementById("uploadCode"),
+
+    pasteCode:
+        document.getElementById("pasteCode"),
+
+    fileInput:
+        document.getElementById("fileInput"),
+
+    characterCounter:
+        document.getElementById("characterCounter"),
+
+    modelButton:
+        document.getElementById("modelButton"),
+
+    modelMenu:
+        document.getElementById("modelMenu"),
+
+    settingsButton:
+        document.getElementById("settingsButton"),
+
+    settingsModal:
+        document.getElementById("settingsModal"),
+
+    closeSettings:
+        document.getElementById("closeSettings"),
+
+    themeSelect:
+        document.getElementById("themeSelect"),
+
+    languageSelect:
+        document.getElementById("languageSelect"),
+
+    helpButton:
+        document.getElementById("helpButton"),
+
+    shareButton:
+        document.getElementById("shareButton"),
+
+    moreButton:
+        document.getElementById("moreButton"),
+
+    voiceButton:
+        document.getElementById("voiceButton")
 };
+
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const STORAGE_KEY =
+    "lua_ai_state_v2";
+
+const THEME_KEY =
+    "lua_ai_theme";
+
+const MAX_MESSAGE_LENGTH =
+    2000;
+
+const MAX_HISTORY =
+    30;
+
+
+/* =========================================================
+   ID
+========================================================= */
+
+function generateId() {
+
+    if (
+        window.crypto &&
+        typeof crypto.randomUUID === "function"
+    ) {
+        return crypto.randomUUID();
+    }
+
+    return (
+        Date.now().toString(36) +
+        Math.random()
+            .toString(36)
+            .slice(2)
+    );
+}
 
 
 /* =========================================================
    STORAGE
 ========================================================= */
 
-const STORAGE_KEY = "lua_ai_state_v1";
-
 function saveState() {
+
     try {
+
         localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({
-                conversations: state.conversations,
-                currentConversationId: state.currentConversationId,
-                selectedModel: state.selectedModel
+                conversations:
+                    state.conversations,
+
+                currentConversationId:
+                    state.currentConversationId,
+
+                selectedModel:
+                    state.selectedModel
             })
         );
+
     } catch (error) {
-        console.warn("Could not save state:", error);
+
+        console.warn(
+            "Could not save state:",
+            error
+        );
     }
 }
 
+
 function loadState() {
+
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+
+        const raw =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
 
         if (!raw) {
+
             createNewConversation(false);
+
             return;
         }
 
-        const saved = JSON.parse(raw);
 
-        state.conversations = Array.isArray(saved.conversations)
-            ? saved.conversations
-            : [];
+        const saved =
+            JSON.parse(raw);
+
+
+        state.conversations =
+            Array.isArray(
+                saved.conversations
+            )
+                ? saved.conversations
+                : [];
+
 
         state.currentConversationId =
-            saved.currentConversationId || null;
+            saved.currentConversationId ||
+            null;
+
 
         state.selectedModel =
-            saved.selectedModel || "lua";
+            saved.selectedModel ||
+            "lua";
 
-        if (!state.conversations.length) {
+
+        if (
+            !state.conversations.length
+        ) {
+
             createNewConversation(false);
+
             return;
         }
 
-        const current = getCurrentConversation();
+
+        const current =
+            getCurrentConversation();
+
 
         if (!current) {
+
             state.currentConversationId =
                 state.conversations[0].id;
         }
 
+
         loadCurrentConversation();
 
     } catch (error) {
-        console.warn("Could not load state:", error);
+
+        console.warn(
+            "Could not load saved state:",
+            error
+        );
 
         state.conversations = [];
+
         createNewConversation(false);
     }
 }
@@ -118,134 +248,214 @@ function loadState() {
    CONVERSATIONS
 ========================================================= */
 
-function generateId() {
-    if (window.crypto && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
+function createNewConversation(
+    shouldSave = true
+) {
 
-    return (
-        Date.now().toString(36) +
-        Math.random().toString(36).slice(2)
-    );
-}
-
-function createNewConversation(save = true) {
     const conversation = {
+
         id: generateId(),
+
         title: "محادثة جديدة",
+
         createdAt: Date.now(),
+
         updatedAt: Date.now(),
+
         messages: []
     };
 
-    state.conversations.unshift(conversation);
-    state.currentConversationId = conversation.id;
+
+    state.conversations.unshift(
+        conversation
+    );
+
+
+    state.currentConversationId =
+        conversation.id;
+
+
     state.messages = [];
 
+
     renderConversations();
+
     renderMessages();
 
-    if (save) {
+
+    if (shouldSave) {
         saveState();
     }
+
 
     closeSidebarMobile();
 }
 
+
 function getCurrentConversation() {
+
     return state.conversations.find(
         conversation =>
-            conversation.id === state.currentConversationId
+            conversation.id ===
+            state.currentConversationId
     );
 }
 
+
 function loadCurrentConversation() {
-    const conversation = getCurrentConversation();
+
+    const conversation =
+        getCurrentConversation();
+
 
     if (!conversation) {
+
         createNewConversation();
+
         return;
     }
 
-    state.messages = Array.isArray(conversation.messages)
-        ? [...conversation.messages]
-        : [];
+
+    state.messages =
+        Array.isArray(
+            conversation.messages
+        )
+            ? [...conversation.messages]
+            : [];
+
 
     renderConversations();
+
     renderMessages();
 }
 
+
 function updateCurrentConversation() {
-    const conversation = getCurrentConversation();
+
+    const conversation =
+        getCurrentConversation();
+
 
     if (!conversation) {
         return;
     }
 
-    conversation.messages = [...state.messages];
-    conversation.updatedAt = Date.now();
+
+    conversation.messages =
+        [...state.messages];
+
+
+    conversation.updatedAt =
+        Date.now();
+
 
     if (
-        conversation.title === "محادثة جديدة" &&
+        conversation.title ===
+            "محادثة جديدة" &&
         state.messages.length > 0
     ) {
-        const firstUserMessage = state.messages.find(
-            message => message.role === "user"
-        );
+
+        const firstUserMessage =
+            state.messages.find(
+                message =>
+                    message.role === "user"
+            );
+
 
         if (firstUserMessage) {
-            conversation.title =
+
+            const title =
                 firstUserMessage.content
                     .replace(/\s+/g, " ")
                     .trim()
-                    .slice(0, 45) ||
+                    .slice(0, 45);
+
+
+            conversation.title =
+                title ||
                 "محادثة جديدة";
         }
     }
 
+
     state.conversations.sort(
-        (a, b) => b.updatedAt - a.updatedAt
+        (a, b) =>
+            b.updatedAt -
+            a.updatedAt
     );
 
+
     renderConversations();
+
     saveState();
 }
 
+
 function renderConversations() {
+
     if (!elements.conversationList) {
         return;
     }
 
-    elements.conversationList.innerHTML = "";
 
-    for (const conversation of state.conversations) {
-        const button = document.createElement("button");
+    elements.conversationList.innerHTML =
+        "";
 
-        button.className = "conversation-item";
+
+    for (
+        const conversation
+        of state.conversations
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.className =
+            "conversation-item";
+
 
         if (
             conversation.id ===
             state.currentConversationId
         ) {
-            button.classList.add("active");
+            button.classList.add(
+                "active"
+            );
         }
 
+
         button.textContent =
-            conversation.title || "محادثة جديدة";
+            conversation.title ||
+            "محادثة جديدة";
+
 
         button.title =
-            conversation.title || "محادثة جديدة";
+            conversation.title ||
+            "محادثة جديدة";
 
-        button.addEventListener("click", () => {
-            state.currentConversationId =
-                conversation.id;
 
-            loadCurrentConversation();
-            saveState();
-            closeSidebarMobile();
-        });
+        button.addEventListener(
+            "click",
+            () => {
 
-        elements.conversationList.appendChild(button);
+                state.currentConversationId =
+                    conversation.id;
+
+
+                loadCurrentConversation();
+
+                saveState();
+
+                closeSidebarMobile();
+            }
+        );
+
+
+        elements.conversationList
+            .appendChild(button);
     }
 }
 
@@ -254,148 +464,251 @@ function renderConversations() {
    MESSAGES
 ========================================================= */
 
-function addMessage(role, content) {
+function addMessage(
+    role,
+    content
+) {
+
     const message = {
+
         id: generateId(),
+
         role,
-        content,
+
+        content: String(
+            content || ""
+        ),
+
         createdAt: Date.now()
     };
 
-    state.messages.push(message);
+
+    state.messages.push(
+        message
+    );
+
 
     updateCurrentConversation();
+
 
     return message;
 }
 
+
 function renderMessages() {
+
     if (!elements.messages) {
         return;
     }
 
-    elements.messages.innerHTML = "";
 
-    const hasMessages = state.messages.length > 0;
+    elements.messages.innerHTML =
+        "";
+
+
+    const hasMessages =
+        state.messages.length > 0;
+
 
     if (elements.welcomeScreen) {
+
         elements.welcomeScreen.classList.toggle(
             "hidden",
             hasMessages
         );
     }
 
-    for (const message of state.messages) {
-        const element = createMessageElement(message);
 
-        elements.messages.appendChild(element);
+    for (
+        const message
+        of state.messages
+    ) {
+
+        elements.messages.appendChild(
+            createMessageElement(
+                message
+            )
+        );
     }
+
 
     scrollToBottom();
 }
 
-function createMessageElement(message) {
-    const wrapper = document.createElement("article");
 
-    wrapper.className = `message ${message.role}`;
+function createMessageElement(
+    message
+) {
 
-    const avatar = document.createElement("div");
+    const wrapper =
+        document.createElement(
+            "article"
+        );
 
-    avatar.className = "message-avatar";
+
+    wrapper.className =
+        `message ${message.role}`;
+
+
+    const avatar =
+        document.createElement(
+            "div"
+        );
+
+
+    avatar.className =
+        "message-avatar";
+
 
     avatar.textContent =
         message.role === "user"
             ? "أنت"
             : "✦";
 
-    const body = document.createElement("div");
 
-    body.className = "message-body";
+    const body =
+        document.createElement(
+            "div"
+        );
 
-    const name = document.createElement("div");
 
-    name.className = "message-name";
+    body.className =
+        "message-body";
+
+
+    const name =
+        document.createElement(
+            "div"
+        );
+
+
+    name.className =
+        "message-name";
+
 
     name.textContent =
         message.role === "user"
             ? "أنت"
             : "Lua AI";
 
-    const content = document.createElement("div");
 
-    content.className = "message-content";
+    const content =
+        document.createElement(
+            "div"
+        );
 
-    if (message.role === "assistant") {
+
+    content.className =
+        "message-content";
+
+
+    if (
+        message.role ===
+        "assistant"
+    ) {
+
         renderAssistantContent(
             content,
             message.content
         );
+
     } else {
-        content.textContent = message.content;
+
+        content.textContent =
+            message.content;
     }
 
+
     body.appendChild(name);
+
     body.appendChild(content);
 
     wrapper.appendChild(avatar);
+
     wrapper.appendChild(body);
+
 
     return wrapper;
 }
 
 
 /* =========================================================
-   MARKDOWN-LIKE RENDERING
+   CODE RENDERING
 ========================================================= */
 
-function escapeHtml(value) {
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+function renderAssistantContent(
+    container,
+    text
+) {
 
-function renderAssistantContent(container, text) {
-    const source = String(text || "");
+    const source =
+        String(text || "");
+
 
     const codeRegex =
         /```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g;
 
+
     let lastIndex = 0;
+
     let match;
 
-    while ((match = codeRegex.exec(source)) !== null) {
-        const before = source.slice(
-            lastIndex,
-            match.index
-        );
+
+    while (
+        (match =
+            codeRegex.exec(source)) !==
+        null
+    ) {
+
+        const before =
+            source.slice(
+                lastIndex,
+                match.index
+            );
+
 
         if (before) {
+
             appendFormattedText(
                 container,
                 before
             );
         }
 
+
         const language =
-            match[1] || "code";
+            match[1] ||
+            "code";
+
 
         const code =
-            match[2].replace(/\n$/, "");
+            match[2].replace(
+                /\n$/,
+                ""
+            );
+
 
         container.appendChild(
-            createCodeBlock(language, code)
+            createCodeBlock(
+                language,
+                code
+            )
         );
 
-        lastIndex = codeRegex.lastIndex;
+
+        lastIndex =
+            codeRegex.lastIndex;
     }
 
+
     const remaining =
-        source.slice(lastIndex);
+        source.slice(
+            lastIndex
+        );
+
 
     if (remaining) {
+
         appendFormattedText(
             container,
             remaining
@@ -403,78 +716,159 @@ function renderAssistantContent(container, text) {
     }
 }
 
-function appendFormattedText(container, text) {
-    const block = document.createElement("div");
 
-    block.textContent = text;
+function appendFormattedText(
+    container,
+    text
+) {
 
-    block.style.whiteSpace = "pre-wrap";
+    const block =
+        document.createElement(
+            "div"
+        );
 
-    container.appendChild(block);
+
+    block.textContent =
+        text;
+
+
+    block.style.whiteSpace =
+        "pre-wrap";
+
+
+    container.appendChild(
+        block
+    );
 }
 
-function createCodeBlock(language, code) {
-    const wrapper = document.createElement("div");
 
-    wrapper.className = "code-block";
+function createCodeBlock(
+    language,
+    code
+) {
 
-    const header = document.createElement("div");
+    const wrapper =
+        document.createElement(
+            "div"
+        );
 
-    header.className = "code-header";
+
+    wrapper.className =
+        "code-block";
+
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+
+    header.className =
+        "code-header";
+
 
     const languageElement =
-        document.createElement("span");
+        document.createElement(
+            "span"
+        );
+
 
     languageElement.className =
         "code-language";
 
+
     languageElement.textContent =
         language;
 
+
     const copyButton =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
 
-    copyButton.className = "copy-code";
 
-    copyButton.textContent = "نسخ";
+    copyButton.className =
+        "copy-code";
+
+
+    copyButton.textContent =
+        "نسخ";
+
 
     copyButton.addEventListener(
         "click",
         async () => {
+
             try {
-                await navigator.clipboard.writeText(
-                    code
-                );
+
+                await navigator
+                    .clipboard
+                    .writeText(code);
+
 
                 copyButton.textContent =
                     "تم النسخ";
 
-                setTimeout(() => {
-                    copyButton.textContent =
-                        "نسخ";
-                }, 1500);
+
+                setTimeout(
+                    () => {
+
+                        copyButton.textContent =
+                            "نسخ";
+
+                    },
+                    1500
+                );
 
             } catch {
+
                 copyButton.textContent =
                     "فشل النسخ";
             }
         }
     );
 
-    header.appendChild(languageElement);
-    header.appendChild(copyButton);
 
-    const pre = document.createElement("pre");
+    header.appendChild(
+        languageElement
+    );
+
+
+    header.appendChild(
+        copyButton
+    );
+
+
+    const pre =
+        document.createElement(
+            "pre"
+        );
+
 
     const codeElement =
-        document.createElement("code");
+        document.createElement(
+            "code"
+        );
 
-    codeElement.textContent = code;
 
-    pre.appendChild(codeElement);
+    codeElement.textContent =
+        code;
 
-    wrapper.appendChild(header);
-    wrapper.appendChild(pre);
+
+    pre.appendChild(
+        codeElement
+    );
+
+
+    wrapper.appendChild(
+        header
+    );
+
+
+    wrapper.appendChild(
+        pre
+    );
+
 
     return wrapper;
 }
@@ -485,60 +879,130 @@ function createCodeBlock(language, code) {
 ========================================================= */
 
 function updateComposer() {
-    const input = elements.messageInput;
+
+    const input =
+        elements.messageInput;
+
 
     if (!input) {
         return;
     }
 
-    const value = input.value;
 
-    if (elements.characterCounter) {
+    const value =
+        input.value;
+
+
+    if (
+        elements.characterCounter
+    ) {
+
         elements.characterCounter.textContent =
-            `${value.length} / 2000`;
+            `${value.length} / ${MAX_MESSAGE_LENGTH}`;
     }
 
-    if (elements.sendButton) {
+
+    if (
+        elements.sendButton
+    ) {
+
         elements.sendButton.disabled =
             !value.trim() ||
             state.isGenerating;
     }
 
-    input.style.height = "auto";
 
     input.style.height =
-        Math.min(input.scrollHeight, 180) +
-        "px";
+        "auto";
+
+
+    input.style.height =
+        Math.min(
+            input.scrollHeight,
+            180
+        ) + "px";
 }
 
+
 function clearInput() {
-    elements.messageInput.value = "";
+
+    if (!elements.messageInput) {
+        return;
+    }
+
+
+    elements.messageInput.value =
+        "";
+
+
+    elements.messageInput.style.height =
+        "auto";
+
 
     updateComposer();
-
-    elements.messageInput.style.height = "auto";
 }
 
 
 /* =========================================================
-   CHAT REQUEST
+   BUILD HISTORY
 ========================================================= */
 
-async function sendMessage(text = null) {
-    if (state.isGenerating) {
+function buildHistory() {
+
+    return state.messages
+        .slice(-MAX_HISTORY)
+        .map(message => {
+
+            return {
+
+                role:
+                    message.role ===
+                    "assistant"
+                        ? "assistant"
+                        : "user",
+
+                content:
+                    String(
+                        message.content || ""
+                    )
+            };
+        });
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+async function sendMessage(
+    text = null
+) {
+
+    if (
+        state.isGenerating
+    ) {
         return;
     }
+
 
     const message =
         text !== null
             ? String(text).trim()
-            : elements.messageInput.value.trim();
+            : elements.messageInput
+                .value
+                .trim();
+
 
     if (!message) {
         return;
     }
 
-    if (message.length > 2000) {
+
+    if (
+        message.length >
+        MAX_MESSAGE_LENGTH
+    ) {
+
         showTemporaryNotice(
             "الرسالة طويلة جدًا."
         );
@@ -546,104 +1010,223 @@ async function sendMessage(text = null) {
         return;
     }
 
+
     clearInput();
 
-    addMessage("user", message);
+
+    /*
+        نضيف رسالة المستخدم أولًا.
+    */
+
+    addMessage(
+        "user",
+        message
+    );
+
 
     renderMessages();
 
+
     setGenerating(true);
 
+
     try {
+
         state.controller =
             new AbortController();
 
-        const response = await fetch(
-            "/api/chat",
-            {
-                method: "POST",
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+        /*
+            سجل المحادثة بعد إضافة
+            رسالة المستخدم.
+        */
 
-                body: JSON.stringify({
-                    message,
-                    model: state.selectedModel
-                }),
+        const history =
+            buildHistory();
 
-                signal:
-                    state.controller.signal
-            }
-        );
+
+        const response =
+            await fetch(
+                "/api/chat",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            message,
+
+                            model:
+                                state.selectedModel,
+
+                            history
+
+                        }),
+
+                    signal:
+                        state.controller
+                            .signal
+                }
+            );
+
 
         let data;
 
+
         try {
-            data = await response.json();
+
+            data =
+                await response.json();
+
         } catch {
+
             throw new Error(
-                "Invalid server response."
+                "تعذر قراءة رد الخادم."
             );
         }
 
-        if (!response.ok || data.ok !== true) {
+
+        if (
+            !response.ok ||
+            data.ok !== true
+        ) {
+
             throw new Error(
                 data.error ||
                 "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي."
             );
         }
 
+
+        const reply =
+            String(
+                data.reply ||
+                ""
+            ).trim();
+
+
+        if (!reply) {
+
+            throw new Error(
+                "الذكاء الاصطناعي لم يرجع ردًا."
+            );
+        }
+
+
         addMessage(
             "assistant",
-            data.reply || "لم يتم استلام رد."
+            reply
         );
 
+
         renderMessages();
+
 
     } catch (error) {
 
-        if (error.name === "AbortError") {
+        if (
+            error.name ===
+            "AbortError"
+        ) {
             return;
         }
 
-        console.error(error);
+
+        console.error(
+            "Chat error:",
+            error
+        );
+
 
         addMessage(
             "assistant",
-            `حدث خطأ:\n\n${error.message}`
+            "حدث خطأ أثناء معالجة طلبك.\n\n" +
+            error.message
         );
+
 
         renderMessages();
 
-    } finally {
-        state.controller = null;
 
-        setGenerating(false);
+    } finally {
+
+        state.controller =
+            null;
+
+
+        setGenerating(
+            false
+        );
     }
 }
+
+
+/* =========================================================
+   STOP GENERATION
+========================================================= */
 
 function stopGeneration() {
-    if (state.controller) {
+
+    if (
+        state.controller
+    ) {
+
         state.controller.abort();
-        state.controller = null;
+
+        state.controller =
+            null;
     }
 
-    setGenerating(false);
+
+    setGenerating(
+        false
+    );
 }
 
-function setGenerating(value) {
-    state.isGenerating = value;
 
-    if (elements.typingContainer) {
+function setGenerating(
+    value
+) {
+
+    state.isGenerating =
+        value;
+
+
+    if (
+        elements.typingContainer
+    ) {
+
         elements.typingContainer.classList.toggle(
             "hidden",
             !value
         );
     }
 
+
+    if (
+        elements.sendButton
+    ) {
+
+        /*
+            نخلي زر الإرسال يتعطل أثناء
+            التوليد حاليًا.
+        */
+
+        elements.sendButton.disabled =
+            value ||
+            !elements.messageInput
+                .value
+                .trim();
+    }
+
+
     updateComposer();
+
 
     if (value) {
         scrollToBottom();
@@ -656,24 +1239,35 @@ function setGenerating(value) {
 ========================================================= */
 
 function setupQuickPrompts() {
+
     const prompts =
         document.querySelectorAll(
             ".prompt-card"
         );
 
-    prompts.forEach(button => {
-        button.addEventListener(
-            "click",
-            () => {
-                const prompt =
-                    button.dataset.prompt;
 
-                if (prompt) {
-                    sendMessage(prompt);
+    prompts.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const prompt =
+                        button.dataset
+                            .prompt;
+
+
+                    if (prompt) {
+
+                        sendMessage(
+                            prompt
+                        );
+                    }
                 }
-            }
-        );
-    });
+            );
+        }
+    );
 }
 
 
@@ -682,27 +1276,45 @@ function setupQuickPrompts() {
 ========================================================= */
 
 function openSidebarMobile() {
-    elements.sidebar?.classList.add("open");
+
+    elements.sidebar?.classList.add(
+        "open"
+    );
 }
 
+
 function closeSidebarMobile() {
-    elements.sidebar?.classList.remove("open");
+
+    elements.sidebar?.classList.remove(
+        "open"
+    );
 }
 
 
 /* =========================================================
-   MODEL MENU
+   MODEL
 ========================================================= */
 
 function toggleModelMenu() {
-    elements.modelMenu?.classList.toggle(
+
+    if (
+        !elements.modelMenu
+    ) {
+        return;
+    }
+
+
+    elements.modelMenu.classList.toggle(
         "hidden"
     );
 
+
     const expanded =
-        !elements.modelMenu?.classList.contains(
-            "hidden"
-        );
+        !elements.modelMenu
+            .classList.contains(
+                "hidden"
+            );
+
 
     elements.modelButton?.setAttribute(
         "aria-expanded",
@@ -710,35 +1322,56 @@ function toggleModelMenu() {
     );
 }
 
-function selectModel(model) {
-    state.selectedModel = model;
+
+function selectModel(
+    model
+) {
+
+    if (
+        model !== "lua" &&
+        model !== "general"
+    ) {
+        model = "lua";
+    }
+
+
+    state.selectedModel =
+        model;
+
 
     document
-        .querySelectorAll(".model-option")
+        .querySelectorAll(
+            ".model-option"
+        )
         .forEach(option => {
+
             option.classList.toggle(
                 "active",
-                option.dataset.model === model
+                option.dataset.model ===
+                    model
             );
         });
 
-    const name =
-        model === "lua"
-            ? "Lua AI"
-            : "General AI";
 
     const modelName =
         document.querySelector(
             ".model-name"
         );
 
+
     if (modelName) {
-        modelName.textContent = name;
+
+        modelName.textContent =
+            model === "lua"
+                ? "Lua AI"
+                : "General AI";
     }
+
 
     elements.modelMenu?.classList.add(
         "hidden"
     );
+
 
     saveState();
 }
@@ -749,65 +1382,98 @@ function selectModel(model) {
 ========================================================= */
 
 function openSettings() {
+
     elements.settingsModal?.classList.remove(
         "hidden"
     );
 }
 
+
 function closeSettings() {
+
     elements.settingsModal?.classList.add(
         "hidden"
     );
 }
 
-function applyTheme(theme) {
+
+function applyTheme(
+    theme
+) {
+
+    const validTheme =
+        theme === "light"
+            ? "light"
+            : "dark";
+
+
     document.body.classList.toggle(
         "light",
-        theme === "light"
+        validTheme === "light"
     );
+
 
     localStorage.setItem(
-        "lua_ai_theme",
-        theme
+        THEME_KEY,
+        validTheme
     );
-}
 
-function loadTheme() {
-    const theme =
-        localStorage.getItem(
-            "lua_ai_theme"
-        ) || "dark";
 
-    applyTheme(theme);
+    if (
+        elements.themeSelect
+    ) {
 
-    if (elements.themeSelect) {
-        elements.themeSelect.value = theme;
+        elements.themeSelect.value =
+            validTheme;
     }
 }
 
 
+function loadTheme() {
+
+    const theme =
+        localStorage.getItem(
+            THEME_KEY
+        ) || "dark";
+
+
+    applyTheme(
+        theme
+    );
+}
+
+
 /* =========================================================
-   ATTACHMENTS
+   FILES
 ========================================================= */
 
 function toggleAttachmentMenu() {
+
     elements.attachmentMenu?.classList.toggle(
         "hidden"
     );
 }
 
+
 function openFilePicker() {
+
     elements.fileInput?.click();
+
 
     elements.attachmentMenu?.classList.add(
         "hidden"
     );
 }
 
-async function handleFile(file) {
+
+async function handleFile(
+    file
+) {
+
     if (!file) {
         return;
     }
+
 
     const allowedExtensions = [
         ".lua",
@@ -818,16 +1484,22 @@ async function handleFile(file) {
         ".md"
     ];
 
-    const lowerName =
+
+    const fileName =
         file.name.toLowerCase();
+
 
     const allowed =
         allowedExtensions.some(
             extension =>
-                lowerName.endsWith(extension)
+                fileName.endsWith(
+                    extension
+                )
         );
 
+
     if (!allowed) {
+
         showTemporaryNotice(
             "نوع الملف غير مدعوم."
         );
@@ -835,7 +1507,12 @@ async function handleFile(file) {
         return;
     }
 
-    if (file.size > 1024 * 1024) {
+
+    if (
+        file.size >
+        1024 * 1024
+    ) {
+
         showTemporaryNotice(
             "حجم الملف أكبر من 1MB."
         );
@@ -843,9 +1520,12 @@ async function handleFile(file) {
         return;
     }
 
+
     try {
+
         const content =
             await file.text();
+
 
         elements.messageInput.value =
             `راجع هذا الملف: ${file.name}\n\n` +
@@ -853,12 +1533,20 @@ async function handleFile(file) {
             content +
             "\n```";
 
+
         updateComposer();
+
 
         elements.messageInput.focus();
 
+
     } catch (error) {
-        console.error(error);
+
+        console.error(
+            "File error:",
+            error
+        );
+
 
         showTemporaryNotice(
             "تعذر قراءة الملف."
@@ -868,63 +1556,97 @@ async function handleFile(file) {
 
 
 /* =========================================================
-   HELP / SHARE
+   HELP
 ========================================================= */
 
 function showHelp() {
+
     showTemporaryNotice(
-        "اكتب سؤالك عن Lua أو Roblox Studio، ويمكنك أيضًا رفع ملف كود لتحليله."
+        "اكتب سؤالك عن Lua أو Roblox Studio، أو ارفع ملف كود لتحليله."
     );
 }
 
+
+/* =========================================================
+   SHARE
+========================================================= */
+
 async function shareConversation() {
+
     const conversation =
         getCurrentConversation();
+
 
     if (!conversation) {
         return;
     }
 
+
     const text =
         conversation.messages
             .map(message => {
+
                 const name =
-                    message.role === "user"
+                    message.role ===
+                    "user"
                         ? "أنت"
                         : "Lua AI";
 
-                return `${name}:\n${message.content}`;
+
+                return (
+                    `${name}:\n` +
+                    message.content
+                );
             })
             .join("\n\n");
 
+
     try {
+
         if (
-            navigator.share
+            typeof navigator.share ===
+            "function"
         ) {
+
             await navigator.share({
-                title: conversation.title,
+
+                title:
+                    conversation.title,
+
                 text
             });
 
             return;
         }
 
-        await navigator.clipboard.writeText(
-            text
-        );
+
+        await navigator.clipboard
+            .writeText(text);
+
 
         showTemporaryNotice(
             "تم نسخ المحادثة."
         );
 
+
     } catch (error) {
-        console.warn(error);
+
+        console.warn(
+            "Share error:",
+            error
+        );
     }
 }
 
+
+/* =========================================================
+   MORE
+========================================================= */
+
 function showMoreMenu() {
+
     showTemporaryNotice(
-        "المزيد من خيارات المحادثة سيتم إضافته لاحقًا."
+        "خيارات إضافية للمحادثة سيتم إضافتها لاحقًا."
     );
 }
 
@@ -933,55 +1655,108 @@ function showMoreMenu() {
    NOTICE
 ========================================================= */
 
-let noticeTimer = null;
+let noticeTimer =
+    null;
 
-function showTemporaryNotice(message) {
+
+function showTemporaryNotice(
+    message
+) {
+
     let notice =
         document.getElementById(
             "temporaryNotice"
         );
 
+
     if (!notice) {
+
         notice =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         notice.id =
             "temporaryNotice";
 
+
         Object.assign(
             notice.style,
             {
+
                 position: "fixed",
+
                 bottom: "95px",
+
                 left: "50%",
+
                 transform:
                     "translateX(-50%)",
+
                 zIndex: "999",
+
                 maxWidth: "90%",
-                padding: "11px 16px",
-                borderRadius: "12px",
-                background: "#1b1b22",
-                color: "#fff",
+
+                padding:
+                    "11px 16px",
+
+                borderRadius:
+                    "12px",
+
+                background:
+                    "#1b1b22",
+
+                color:
+                    "#ffffff",
+
                 border:
                     "1px solid rgba(255,255,255,.1)",
+
                 boxShadow:
                     "0 15px 40px rgba(0,0,0,.35)",
-                fontSize: "13px",
-                textAlign: "center"
+
+                fontSize:
+                    "13px",
+
+                textAlign:
+                    "center",
+
+                transition:
+                    "opacity .2s ease"
             }
         );
 
-        document.body.appendChild(notice);
+
+        document.body.appendChild(
+            notice
+        );
     }
 
-    notice.textContent = message;
-    notice.style.opacity = "1";
 
-    clearTimeout(noticeTimer);
+    notice.textContent =
+        message;
 
-    noticeTimer = setTimeout(() => {
-        notice.style.opacity = "0";
-    }, 2500);
+
+    notice.style.opacity =
+        "1";
+
+
+    clearTimeout(
+        noticeTimer
+    );
+
+
+    noticeTimer =
+        setTimeout(
+            () => {
+
+                notice.style.opacity =
+                    "0";
+
+            },
+            2500
+        );
 }
 
 
@@ -1005,6 +1780,7 @@ function setupEvents() {
                 event.key === "Enter" &&
                 !event.shiftKey
             ) {
+
                 event.preventDefault();
 
                 sendMessage();
@@ -1016,9 +1792,15 @@ function setupEvents() {
     elements.sendButton?.addEventListener(
         "click",
         () => {
-            if (state.isGenerating) {
+
+            if (
+                state.isGenerating
+            ) {
+
                 stopGeneration();
+
             } else {
+
                 sendMessage();
             }
         }
@@ -1027,7 +1809,10 @@ function setupEvents() {
 
     elements.newChatButton?.addEventListener(
         "click",
-        () => createNewConversation()
+        () => {
+
+            createNewConversation();
+        }
     );
 
 
@@ -1050,18 +1835,21 @@ function setupEvents() {
 
 
     document
-        .querySelectorAll(".model-option")
+        .querySelectorAll(
+            ".model-option"
+        )
         .forEach(option => {
 
             option.addEventListener(
                 "click",
                 () => {
+
                     selectModel(
-                        option.dataset.model
+                        option.dataset
+                            .model
                     );
                 }
             );
-
         });
 
 
@@ -1080,10 +1868,12 @@ function setupEvents() {
     elements.settingsModal?.addEventListener(
         "click",
         event => {
+
             if (
                 event.target ===
                 elements.settingsModal
             ) {
+
                 closeSettings();
             }
         }
@@ -1093,7 +1883,10 @@ function setupEvents() {
     elements.themeSelect?.addEventListener(
         "change",
         event => {
-            applyTheme(event.target.value);
+
+            applyTheme(
+                event.target.value
+            );
         }
     );
 
@@ -1135,10 +1928,14 @@ function setupEvents() {
             const file =
                 event.target.files?.[0];
 
-            handleFile(file);
 
-            event.target.value = "";
+            handleFile(
+                file
+            );
 
+
+            event.target.value =
+                "";
         }
     );
 
@@ -1150,14 +1947,20 @@ function setupEvents() {
             try {
 
                 const text =
-                    await navigator.clipboard.readText();
+                    await navigator
+                        .clipboard
+                        .readText();
+
 
                 elements.messageInput.value =
                     text;
 
+
                 updateComposer();
 
+
                 elements.messageInput.focus();
+
 
             } catch {
 
@@ -1165,6 +1968,7 @@ function setupEvents() {
                     "تعذر الوصول إلى الحافظة."
                 );
             }
+
 
             elements.attachmentMenu?.classList.add(
                 "hidden"
@@ -1176,8 +1980,9 @@ function setupEvents() {
     elements.voiceButton?.addEventListener(
         "click",
         () => {
+
             showTemporaryNotice(
-                "ميزة الصوت سيتم تفعيلها لاحقًا."
+                "ميزة الصوت غير مفعلة حاليًا."
             );
         }
     );
@@ -1197,10 +2002,12 @@ function setupEvents() {
                     event.target
                 )
             ) {
+
                 elements.modelMenu.classList.add(
                     "hidden"
                 );
             }
+
 
             if (
                 elements.attachmentMenu &&
@@ -1212,11 +2019,11 @@ function setupEvents() {
                     event.target
                 )
             ) {
+
                 elements.attachmentMenu.classList.add(
                     "hidden"
                 );
             }
-
         }
     );
 }
@@ -1227,30 +2034,47 @@ function setupEvents() {
 ========================================================= */
 
 function scrollToBottom() {
-    requestAnimationFrame(() => {
-        if (elements.chatContainer) {
-            elements.chatContainer.scrollTop =
-                elements.chatContainer.scrollHeight;
+
+    requestAnimationFrame(
+        () => {
+
+            const container =
+                document.getElementById(
+                    "chatContainer"
+                );
+
+
+            if (container) {
+
+                container.scrollTop =
+                    container.scrollHeight;
+            }
         }
-    });
+    );
 }
 
 
 /* =========================================================
-   START
+   INITIALIZATION
 ========================================================= */
 
 function init() {
+
     loadTheme();
+
     loadState();
+
     setupEvents();
+
     setupQuickPrompts();
+
     updateComposer();
 
-    const currentModel =
-        state.selectedModel || "lua";
 
-    selectModel(currentModel);
+    selectModel(
+        state.selectedModel
+    );
 }
+
 
 init();
