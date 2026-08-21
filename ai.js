@@ -41,3 +41,4 @@ async function askAI(userMessage) {
         appendMessage("❌ تعذر الاتصال بالخادم. تحقق من الاتصال بالإنترنت.", "ai");
     }
 }
+
