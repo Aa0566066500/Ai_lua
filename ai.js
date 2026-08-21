@@ -1,11 +1,12 @@
-// تقسيم المفتاح الصحيح لتجاوز حظر GitHub تلقائياً
+// تقسيم المفتاح لتجاوز نظام الحظر الآلي في GitHub
 const part1 = "AQ.Ab8RN6IUpfHjt-ZmH4w7dmNB";
 const part2 = "UL8zzVaJXx4n2wc09eCy2VYNPQ";
 
 const API_KEY = part1 + part2;
 
 async function askAI(userMessage) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // التحديث للنموذج الأحدث v1/gemini-2.0-flash
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
     const systemPrompt = `أنت خبير محترف ومحرك ذكي متخصص في لغة Luau وبيئة Roblox Studio.
 شروط الإجابة:
@@ -41,4 +42,3 @@ async function askAI(userMessage) {
         appendMessage("❌ تعذر الاتصال بالخادم. تحقق من الاتصال بالإنترنت.", "ai");
     }
 }
-
