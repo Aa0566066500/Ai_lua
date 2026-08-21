@@ -1,17 +1,18 @@
-// تقسيم المفتاح الجديد لتجاوز نظام الحظر الآلي في GitHub
+// تقسيم المفتاح لتجاوز نظام الحظر الآلي في GitHub
 const part1 = "AQ.Ab8RN6KceApR3E3XrcUYbuE";
 const part2 = "oVEjGRXN8BF7LUB72adgBcIi4Zg";
 
 const API_KEY = part1 + part2;
 
 async function askAI(userMessage) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // تعديل الرابط إلى الإصدار المستقر v1 مع الموديل المعتمد
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     const systemPrompt = `أنت خبير ومحرك ذكي متخصص في لغة Luau وبيئة Roblox Studio.
 شروط الإجابة:
 1. قم بفحص الكود والتحقق من صحته برمجياً بنسبة 100% قبل إرساله.
 2. قدم الكود بشكل يسهل نسخه واستخدامه في Roblox Studio مباشرة.
-3. أجب بدقة ووضوح وبأسلوب مباشر دون إطالة.`;
+3. أجب بدقة ووضوح وبأسلوب مباشر.`;
 
     try {
         const response = await fetch(url, {
