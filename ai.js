@@ -5,8 +5,8 @@ const part2 = "UL8zzVaJXx4n2wc09eCy2VYNPQ";
 const API_KEY = part1 + part2;
 
 async function askAI(userMessage) {
-    // التحديث للنموذج الأحدث v1/gemini-2.0-flash
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+    // التحديث للموديل المطلوب مباشرة: gemini-3.6-flash
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent?key=${API_KEY}`;
 
     const systemPrompt = `أنت خبير محترف ومحرك ذكي متخصص في لغة Luau وبيئة Roblox Studio.
 شروط الإجابة:
