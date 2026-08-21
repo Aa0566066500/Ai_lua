@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luau Studio AI - تسجيل الدخول</title>
-    <!-- خط Cairo العربي المعتمد لتصميم أنيق -->
+    <title>Luau Studio AI - تجربة مجانية</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,84 +11,44 @@
 </head>
 <body>
 
-    <div class="auth-card">
-        <!-- قسم الشعار والمقدمة -->
-        <div class="brand-header">
-            <div class="logo-wrapper">
+    <div class="app-container">
+        <!-- الهيدر العلوي -->
+        <header class="app-header">
+            <div class="logo-box">
                 <svg class="brand-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="url(#gradient2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="url(#gradient3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="gradient1" x1="2" y1="2" x2="22" y2="12" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#38BDF8"/>
-                            <stop offset="1" stop-color="#3B82F6"/>
-                        </linearGradient>
-                        <linearGradient id="gradient2" x1="2" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#3B82F6"/>
-                            <stop offset="1" stop-color="#1D4ED8"/>
-                        </linearGradient>
-                        <linearGradient id="gradient3" x1="2" y1="7" x2="22" y2="17" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#00F2FE"/>
-                            <stop offset="1" stop-color="#4FACFE"/>
-                        </linearGradient>
-                    </defs>
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="#00F2FE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
+                <span class="logo-text">Luau Studio AI</span>
             </div>
-            <h1 class="brand-title">Luau Studio AI</h1>
-            <p class="brand-subtitle">مرحباً بك مجدداً في منصتك الذكية</p>
-        </div>
+            <span class="status-badge">⚡ تجربة مجانية مباشرة</span>
+        </header>
 
-        <!-- نموذج تسجيل الدخول -->
-        <form id="loginForm" class="auth-form" onsubmit="return false;">
-            <div class="input-field-group">
-                <label for="emailInput" class="input-label">البريد الإلكتروني</label>
-                <div class="input-container">
-                    <input type="email" id="emailInput" placeholder="example@icloud.com أو gmail" required autocomplete="email">
-                    <span id="providerBadge" class="provider-badge hidden"></span>
-                </div>
+        <!-- منطقة المحادثة -->
+        <main class="chat-container" id="chatContainer">
+            <div class="welcome-card">
+                <h2>مرحباً بك في Luau Studio AI 👋</h2>
+                <p>يمكنك البدء في تجربة الذكاء الاصطناعي مباشرة بدون الحاجة لإنشاء حساب أو تسجيل دخول.</p>
             </div>
+        </main>
 
-            <div class="input-field-group">
-                <label for="passwordInput" class="input-label">كلمة المرور</label>
-                <div class="input-container">
-                    <input type="password" id="passwordInput" placeholder="••••••••••••" required autocomplete="current-password">
-                </div>
-            </div>
-
-            <div class="forgot-row">
-                <a href="#" id="forgotPasswordBtn" class="forgot-link">نسيت كلمة المرور؟</a>
-            </div>
-
-            <button type="submit" id="loginBtn" class="btn btn-primary">
-                <span>تسجيل الدخول</span>
-                <span class="btn-icon">🚀</span>
-            </button>
-        </form>
-
-        <!-- فاصل التمييز -->
-        <div class="divider">
-            <span>أو</span>
-        </div>
-
-        <!-- تسجيل بواسطة Google -->
-        <button type="button" id="googleBtn" class="btn btn-google">
-            <svg class="google-icon" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.26v3.15C3.25 21.32 7.34 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.26C.46 8.23 0 10.06 0 12s.46 3.77 1.26 5.39l4.02-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.25 2.68 1.26 6.61l4.02 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
-            </svg>
-            <span>تسجيل الدخول باستخدام Google</span>
-        </button>
-
-        <!-- روابط أسفل الصفحة -->
-        <div class="auth-footer">
-            <span>ليس لديك حساب؟</span>
-            <a href="#" id="signupLink" class="signup-link">إنشاء حساب جديد</a>
-        </div>
+        <!-- صندوق إدخال الرسائل -->
+        <footer class="input-footer">
+            <form id="chatForm" class="chat-form">
+                <input type="text" id="userInput" placeholder="اكتب سؤالك أو طلبك هنا..." required autocomplete="off">
+                <button type="submit" id="sendBtn" class="send-btn">
+                    <span>إرسال</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="send-icon">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </footer>
     </div>
 
-    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    <script src="ai.js"></script>
 </body>
 </html>
