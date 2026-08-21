@@ -1,222 +1,95 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luau Studio AI</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luau Studio AI - تسجيل الدخول</title>
+    <!-- خط Cairo العربي المعتمد لتصميم أنيق -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 🔒 نافذة الدخول والحسابات -->
-  <div class="modal-overlay" id="authModal">
-    <div class="card auth-card">
-      
-      <!-- 1. تسجيل الدخول -->
-      <div id="view-login">
-        <h2>تسجيل الدخول</h2>
-        <p>مرحباً بك مجدداً في Luau Studio AI</p>
-
-        <input type="email" id="login-email" class="input-field" placeholder="البريد الإلكتروني" />
-        <input type="password" id="login-password" class="input-field" placeholder="كلمة المرور" />
-        
-        <div class="auth-links">
-          <a href="javascript:void(0)" onclick="switchAuthView('forgot')">نسيت كلمة المرور؟</a>
-        </div>
-
-        <button class="btn btn-primary" onclick="handleLogin()">تسجيل الدخول 🚀</button>
-
-        <div class="divider"><span>أو</span></div>
-
-        <div class="google-btn-wrapper">
-          <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID" data-callback="handleGoogleLogin"></div>
-          <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-shape="pill"></div>
-        </div>
-
-        <p class="switch-mode-text">
-          ليس لديك حساب؟ <a href="javascript:void(0)" onclick="switchAuthView('signup')">إنشاء حساب جديد</a>
-        </p>
-      </div>
-
-      <!-- 2. إنشاء حساب جديد -->
-      <div id="view-signup" style="display: none;">
-        <h2>إنشاء حساب جديد</h2>
-        <p>انضم إلى مجتمع مطوري روبلوكس</p>
-
-        <div id="signup-step-1">
-          <div class="input-row">
-            <input type="text" id="signup-firstname" class="input-field" placeholder="الاسم الأول" />
-            <input type="text" id="signup-lastname" class="input-field" placeholder="اسم العائلة" />
-          </div>
-          <input type="email" id="signup-email" class="input-field" placeholder="البريد الإلكتروني" />
-          <input type="password" id="signup-password" class="input-field" placeholder="كلمة المرور" />
-          <input type="password" id="signup-confirm-password" class="input-field" placeholder="تأكيد كلمة المرور" />
-          
-          <button class="btn btn-primary" onclick="sendSignupOTP()">إرسال كود التحقق 📩</button>
-        </div>
-
-        <div id="signup-step-2" style="display: none;">
-          <p style="color: var(--accent-cyan); margin-bottom: 12px; font-size: 0.9rem;">أدخل كود التحقق المرسل لإيميلك</p>
-          <input type="text" id="signup-otp" class="input-field otp-input" placeholder="000000" maxlength="6" />
-          <button class="btn btn-primary" onclick="verifyAndCreateAccount()">تأكيد وإنشاء الحساب 🎉</button>
-        </div>
-
-        <p class="switch-mode-text">
-          لديك حساب بالفعل؟ <a href="javascript:void(0)" onclick="switchAuthView('login')">تسجيل الدخول</a>
-        </p>
-      </div>
-
-      <!-- 3. استعادة كلمة المرور -->
-      <div id="view-forgot" style="display: none;">
-        <h2>استعادة كلمة المرور</h2>
-        <p>أدخل إيميلك لإرسال رمز إعادة التعيين</p>
-
-        <div id="forgot-step-1">
-          <input type="email" id="forgot-email" class="input-field" placeholder="البريد الإلكتروني" />
-          <button class="btn btn-primary" onclick="sendResetOTP()">إرسال كود الاستعادة 📩</button>
-        </div>
-
-        <div id="forgot-step-2" style="display: none;">
-          <input type="text" id="forgot-otp" class="input-field otp-input" placeholder="كود التحقق (6 أرقام)" maxlength="6" />
-          <input type="password" id="new-password" class="input-field" placeholder="كلمة المرور الجديدة" />
-          <input type="password" id="confirm-new-password" class="input-field" placeholder="تأكيد كلمة المرور الجديدة" />
-          <button class="btn btn-primary" onclick="resetPasswordAndLogin()">حفظ وتحديث كلمة المرور 🔐</button>
-        </div>
-
-        <p class="switch-mode-text">
-          <a href="javascript:void(0)" onclick="switchAuthView('login')">← العودة لتسجيل الدخول</a>
-        </p>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ⚙️ نافذة الإعدادات -->
-  <div class="modal-overlay" id="settingsModal" style="display: none;">
-    <div class="card settings-card">
-      <div class="settings-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>⚙️ الإعدادات</h2>
-        <button class="icon-btn" onclick="toggleSettingsModal(false)">&times;</button>
-      </div>
-
-      <div class="settings-body">
-        <div class="settings-section" style="margin-bottom: 20px;">
-          <h3 style="margin-bottom: 12px; font-size: 1rem;">قسم الحساب</h3>
-          <div class="field-group" style="margin-bottom: 10px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted);">الاسم الكامل:</label>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <input type="text" id="setting-name" class="input-field" value="مـ*** سـ***" disabled style="margin-bottom: 0;" />
-              <button class="btn btn-secondary" onclick="requestAccountEdit('name')">تعديل 📩</button>
+    <div class="auth-card">
+        <!-- قسم الشعار والمقدمة -->
+        <div class="brand-header">
+            <div class="logo-wrapper">
+                <svg class="brand-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="url(#gradient2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="url(#gradient3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="gradient1" x1="2" y1="2" x2="22" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#38BDF8"/>
+                            <stop offset="1" stop-color="#3B82F6"/>
+                        </linearGradient>
+                        <linearGradient id="gradient2" x1="2" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#3B82F6"/>
+                            <stop offset="1" stop-color="#1D4ED8"/>
+                        </linearGradient>
+                        <linearGradient id="gradient3" x1="2" y1="7" x2="22" y2="17" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#00F2FE"/>
+                            <stop offset="1" stop-color="#4FACFE"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
             </div>
-          </div>
+            <h1 class="brand-title">Luau Studio AI</h1>
+            <p class="brand-subtitle">مرحباً بك مجدداً في منصتك الذكية</p>
+        </div>
 
-          <div class="field-group" style="margin-bottom: 10px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted);">البريد الإلكتروني:</label>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <input type="text" id="setting-email" class="input-field" value="usr***@gmail.com" disabled style="margin-bottom: 0;" />
-              <button class="btn btn-secondary" onclick="requestAccountEdit('email')">تعديل 📩</button>
+        <!-- نموذج تسجيل الدخول -->
+        <form id="loginForm" class="auth-form" onsubmit="return false;">
+            <div class="input-field-group">
+                <label for="emailInput" class="input-label">البريد الإلكتروني</label>
+                <div class="input-container">
+                    <input type="email" id="emailInput" placeholder="example@icloud.com أو gmail" required autocomplete="email">
+                    <span id="providerBadge" class="provider-badge hidden"></span>
+                </div>
             </div>
-          </div>
 
-          <div class="field-group" style="margin-bottom: 10px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted);">كلمة المرور:</label>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <input type="password" id="setting-password" class="input-field" value="••••••••" disabled style="margin-bottom: 0;" />
-              <button class="btn btn-secondary" onclick="requestAccountEdit('password')">تعديل 📩</button>
+            <div class="input-field-group">
+                <label for="passwordInput" class="input-label">كلمة المرور</label>
+                <div class="input-container">
+                    <input type="password" id="passwordInput" placeholder="••••••••••••" required autocomplete="current-password">
+                </div>
             </div>
-          </div>
+
+            <div class="forgot-row">
+                <a href="#" id="forgotPasswordBtn" class="forgot-link">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" id="loginBtn" class="btn btn-primary">
+                <span>تسجيل الدخول</span>
+                <span class="btn-icon">🚀</span>
+            </button>
+        </form>
+
+        <!-- فاصل التمييز -->
+        <div class="divider">
+            <span>أو</span>
         </div>
 
-        <div class="settings-section" style="margin-bottom: 20px;">
-          <h3 style="margin-bottom: 12px; font-size: 1rem;">مظهر الواجهة</h3>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary theme-btn active" id="theme-default" onclick="setTheme('default')" style="flex: 1;">🔵 أساسي</button>
-            <button class="btn btn-secondary theme-btn" id="theme-black" onclick="setTheme('black')" style="flex: 1;">⬛ أسود</button>
-            <button class="btn btn-secondary theme-btn" id="theme-white" onclick="setTheme('white')" style="flex: 1;">⚪ أبيض</button>
-          </div>
+        <!-- تسجيل بواسطة Google -->
+        <button type="button" id="googleBtn" class="btn btn-google">
+            <svg class="google-icon" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.26v3.15C3.25 21.32 7.34 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.26C.46 8.23 0 10.06 0 12s.46 3.77 1.26 5.39l4.02-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.25 2.68 1.26 6.61l4.02 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
+            </svg>
+            <span>تسجيل الدخول باستخدام Google</span>
+        </button>
+
+        <!-- روابط أسفل الصفحة -->
+        <div class="auth-footer">
+            <span>ليس لديك حساب؟</span>
+            <a href="#" id="signupLink" class="signup-link">إنشاء حساب جديد</a>
         </div>
-
-        <div class="settings-section" style="margin-bottom: 20px;">
-          <h3 style="margin-bottom: 12px; font-size: 1rem;">اللغة / Language</h3>
-          <select id="langSelect" class="input-field" onchange="changeLanguage(this.value)" style="margin-bottom: 0;">
-            <option value="ar">العربية (AR)</option>
-            <option value="en">English (EN)</option>
-          </select>
-        </div>
-
-        <div class="settings-section" style="border-top: 1px solid var(--bg-card-border); padding-top: 16px;">
-          <button class="btn btn-warning" onclick="confirmAccountAction('switch')">🔄 تغيير الحساب</button>
-          <button class="btn btn-danger" onclick="confirmAccountAction('logout')">🚪 تسجيل الخروج</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ⚠️ نافذة التأكيد -->
-  <div class="modal-overlay" id="confirmModal" style="display: none;">
-    <div class="card confirm-card">
-      <h3 id="confirmTitle" style="margin-bottom: 10px;">تأكيد الإجراء</h3>
-      <p id="confirmMessage" style="color: var(--text-muted); font-size: 0.9rem;">سوف يتم الخروج من الحساب الحالي، هل أنت متأكد؟</p>
-      <div class="confirm-actions">
-        <button class="btn-danger-confirm" id="confirmAcceptBtn">خروج</button>
-        <button class="btn-cancel-confirm" onclick="closeConfirmModal()">رفض</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Header -->
-  <header>
-    <div class="brand-container" onclick="clearChat()">
-      <svg class="brand-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" rx="28" fill="#161b22"/>
-        <path d="M28 35L16 50L28 65" stroke="#1B6EF3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M72 35L84 50L72 65" stroke="#1B6EF3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="50" cy="50" r="10" fill="#00E5FF"/>
-      </svg>
-      <div class="brand-text">LUAU STUDIO <span>AI</span></div>
     </div>
 
-    <div class="header-controls">
-      <select id="modeSelect" class="input-field mode-selector">
-        <option value="default">🤖 الافتراضي (مساعدة متكاملة)</option>
-        <option value="flash">⚡ طور الومض (استجابة خاطفة)</option>
-      </select>
-
-      <div class="user-profile" id="userProfile" onclick="toggleSettingsModal(true)" style="display: none;">
-        <img src="" id="userImg" class="user-avatar" alt="Profile">
-      </div>
-
-      <button class="icon-btn" onclick="clearChat()"><i class="fa-regular fa-pen-to-square"></i></button>
-      <button class="icon-btn" onclick="toggleSettingsModal(true)"><i class="fa-solid fa-gear"></i></button>
-    </div>
-  </header>
-
-  <!-- Chat Area -->
-  <div id="chat-stream">
-    <div class="ai-msg-container">
-      <div class="ai-response card" id="welcome-msg">
-        مرحباً بك في <strong>Luau Studio AI</strong>! 🚀<br>أنا مساعدك الذكي المتكامل. تفضل بسؤالي عن أي شيء، السواليف والدردشة، أو برمجة وتصحيح أكواد Roblox Studio!
-      </div>
-    </div>
-  </div>
-
-  <!-- Input Bar -->
-  <div class="input-container">
-    <div class="input-bar">
-      <button class="plus-btn" onclick="document.getElementById('file-upload').click()"><i class="fa-solid fa-plus"></i></button>
-      <input type="file" id="file-upload" hidden accept="image/*,.lua,.luau">
-      <textarea id="user-input" placeholder="اكتب لـ Luau Studio AI..." rows="1" onkeydown="checkEnter(event)"></textarea>
-      <button class="send-btn" onclick="sendMessage()"><i class="fa-solid fa-arrow-up"></i></button>
-    </div>
-    <div class="disclaimer">Luau Studio AI • مخصص لمطوري روبلوكس والمحادثات الذكية.</div>
-  </div>
-
-  <script type="module" src="app.js"></script>
-  <script src="auth.js"></script>
-  <script src="settings.js"></script>
-  <script src="ai.js"></script>
+    <script src="auth.js"></script>
 </body>
 </html>
