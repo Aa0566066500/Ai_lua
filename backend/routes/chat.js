@@ -6,7 +6,7 @@ const { generateReply } = require("../services/ai");
 const router = express.Router();
 
 const MAX_MESSAGE_LENGTH = 3000;
-const MAX_HISTORY = 30;
+const MAX_HISTORY = 20;
 
 router.post("/", async (req, res) => {
     try {
@@ -29,59 +29,48 @@ router.post("/", async (req, res) => {
             });
         }
 
-        if (
-            message.length >
-            MAX_MESSAGE_LENGTH
-        ) {
+        if (message.length > MAX_MESSAGE_LENGTH) {
             return res.status(400).json({
                 ok: false,
-                error:
-                    "الرسالة أطول من 3000 حرف."
+                error: "الرسالة أطول من 3000 حرف."
             });
         }
 
-        const cleanHistory =
-            history
-                .filter(item =>
+        const cleanHistory = history
+            .filter(item => {
+                return (
                     item &&
-                    (
-                        item.role === "user" ||
-                        item.role === "assistant"
-                    ) &&
-                    typeof item.content === "string"
-                )
-                .slice(-MAX_HISTORY)
-                .map(item => ({
-                    role: item.role,
-                    content:
-                        item.content.slice(
-                            0,
-                            MAX_MESSAGE_LENGTH
-                        )
-                }));
+                    (item.role === "user" ||
+                        item.role === "assistant") &&
+                    typeof item.content === "string" &&
+                    item.content.trim()
+                );
+            })
+            .slice(-MAX_HISTORY)
+            .map(item => ({
+                role: item.role,
+                content: item.content
+                    .trim()
+                    .slice(0, MAX_MESSAGE_LENGTH)
+            }));
 
-        const reply =
-            await generateReply(
-                message,
-                cleanHistory
-            );
+        const reply = await generateReply(
+            message,
+            cleanHistory
+        );
 
-        return res.json({
+        return res.status(200).json({
             ok: true,
-            reply
+            reply: String(reply)
         });
 
     } catch (error) {
-
-        console.error(
-            "Chat API Error:",
-            error
-        );
+        console.error("Chat API Error:", error);
 
         return res.status(500).json({
             ok: false,
             error:
-                error.message ||
+                error?.message ||
                 "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي."
         });
     }
