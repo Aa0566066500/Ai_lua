@@ -1,7 +1,6 @@
 {
   "name": "ai-lua-roblox",
   "version": "1.0.0",
-  "description": "AI assistant for Lua, Luau and Roblox Studio",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js"
