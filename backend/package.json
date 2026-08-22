@@ -1,9 +1,10 @@
 {
   "name": "ai-lua-roblox",
   "version": "1.0.0",
-  "main": "backend/server.js",
+  "description": "AI Lua Roblox Assistant",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
