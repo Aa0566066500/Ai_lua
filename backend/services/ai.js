@@ -1,26 +1,51 @@
 "use strict";
 
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+const OpenAI = require("openai");
+
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 const MODEL =
-    process.env.AI_MODEL ||
-    "claude-3-5-sonnet-latest";
+    process.env.AI_MODEL || "gpt-5.6";
 
 const MAX_HISTORY = 30;
 const MAX_MESSAGE_LENGTH = 3000;
 const TIMEOUT_MS = 30000;
 
 const SYSTEM_PROMPT = `
-أنت Lua AI، مساعد ذكاء اصطناعي احترافي متخصص في Roblox Studio وLuau.
+أنت Lua AI، مساعد ذكاء اصطناعي احترافي ومتخصص في Roblox Studio وLuau.
 
-ساعد المستخدم في البرمجة، إصلاح الأخطاء، شرح الأكواد، تصميم أنظمة Roblox، وتحسين الأمان والأداء.
+مهمتك مساعدة المستخدم في:
+- Lua وLuau
+- Roblox Studio
+- Scripts وLocalScripts وModuleScripts
+- RemoteEvents وRemoteFunctions
+- ServerScriptService
+- ReplicatedStorage
+- StarterGui وStarterPlayer
+- واجهات المستخدم UI
+- NPCs
+- Inventory
+- Trading
+- Round Systems
+- Lobby Systems
+- DataStores
+- Debugging
+- تحسين الأداء
+- حماية أنظمة Roblox
 
-عند إعطاء كود:
-- استخدم Luau الصحيحة.
-- اشرح أين يوضع الملف عند الحاجة.
-- لا تخترع APIs.
-- اجعل الحل واضحًا وكاملًا.
-- لا تكشف أي مفاتيح أو أسرار.
+القواعد:
+1. افهم سياق المحادثة قبل الإجابة.
+2. إذا طلب المستخدم كودًا، أعطه كودًا كاملًا وواضحًا.
+3. اذكر اسم الملف ومكان وضعه عندما يكون ذلك مفيدًا.
+4. استخدم Luau الصحيحة الخاصة بـ Roblox.
+5. لا تخترع APIs أو خصائص غير موجودة.
+6. إذا كان هناك خطأ، اشرح السبب ثم أعط الإصلاح.
+7. لا تكشف مفاتيح API أو الأسرار.
+8. اعتبر بيانات العميل غير موثوقة، وضع التحقق المهم على السيرفر.
+9. لا تدّعي أنك نفذت شيئًا لم تنفذه.
+10. اجعل الإجابة مرتبة وسهلة الفهم.
 `;
 
 function cleanHistory(history) {
@@ -48,9 +73,9 @@ function cleanHistory(history) {
 
 async function generateReply(message, history = []) {
 
-    if (!API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
         throw new Error(
-            "ANTHROPIC_API_KEY غير موجود في Environment Variables."
+            "OPENAI_API_KEY غير موجود في Environment Variables."
         );
     }
 
@@ -67,18 +92,34 @@ async function generateReply(message, history = []) {
             MAX_MESSAGE_LENGTH
         );
 
-    const messages =
+    const historyMessages =
         cleanHistory(history);
 
+    const input = [
+        {
+            role: "developer",
+            content: SYSTEM_PROMPT
+        }
+    ];
+
+    for (const item of historyMessages) {
+        input.push({
+            role: item.role,
+            content: item.content
+        });
+    }
+
     const last =
-        messages[messages.length - 1];
+        historyMessages[
+            historyMessages.length - 1
+        ];
 
     if (
         !last ||
         last.role !== "user" ||
         last.content !== cleanMessage
     ) {
-        messages.push({
+        input.push({
             role: "user",
             content: cleanMessage
         });
@@ -92,37 +133,32 @@ async function generateReply(message, history = []) {
             controller.abort();
         }, TIMEOUT_MS);
 
-    let response;
-
     try {
 
-        response = await fetch(
-            "https://api.anthropic.com/v1/messages",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    "x-api-key":
-                        API_KEY,
-
-                    "anthropic-version":
-                        "2023-06-01"
-                },
-
-                body: JSON.stringify({
+        const response =
+            await client.responses.create(
+                {
                     model: MODEL,
-                    max_tokens: 4096,
-                    system: SYSTEM_PROMPT,
-                    messages
-                }),
+                    input: input
+                },
+                {
+                    signal:
+                        controller.signal
+                }
+            );
 
-                signal:
-                    controller.signal
-            }
-        );
+        const reply =
+            String(
+                response.output_text || ""
+            ).trim();
+
+        if (!reply) {
+            throw new Error(
+                "OpenAI لم يرجع ردًا."
+            );
+        }
+
+        return reply;
 
     } catch (error) {
 
@@ -131,70 +167,24 @@ async function generateReply(message, history = []) {
             "AbortError"
         ) {
             throw new Error(
-                "انتهت مهلة الاتصال بـ Claude بعد 30 ثانية."
+                "انتهت مهلة الاتصال بـ OpenAI بعد 30 ثانية."
             );
         }
 
+        console.error(
+            "OpenAI Error:",
+            error
+        );
+
         throw new Error(
-            "تعذر الاتصال بـ Anthropic: " +
-            error.message
+            error?.message ||
+            "حدث خطأ أثناء الاتصال بـ OpenAI."
         );
 
     } finally {
 
         clearTimeout(timeout);
     }
-
-    let data;
-
-    try {
-
-        data =
-            await response.json();
-
-    } catch {
-
-        throw new Error(
-            "Anthropic أرسل ردًا غير مفهوم."
-        );
-    }
-
-    if (!response.ok) {
-
-        const apiError =
-            data?.error?.message ||
-            "خطأ غير معروف من Anthropic.";
-
-        throw new Error(
-            `Anthropic ${response.status}: ${apiError}`
-        );
-    }
-
-    const content =
-        Array.isArray(data?.content)
-            ? data.content
-            : [];
-
-    const reply =
-        content
-            .filter(part =>
-                part &&
-                part.type === "text"
-            )
-            .map(part =>
-                part.text || ""
-            )
-            .join("")
-            .trim();
-
-    if (!reply) {
-
-        throw new Error(
-            "Anthropic لم يرجع نصًا."
-        );
-    }
-
-    return reply;
 }
 
 module.exports = {
