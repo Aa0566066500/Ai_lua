@@ -9,10 +9,6 @@ const MAX_MESSAGE_LENGTH = 3000;
 const MAX_HISTORY = 30;
 
 
-/* =========================================================
-   POST /api/chat
-========================================================= */
-
 router.post("/", async (req, res) => {
     try {
         const body = req.body || {};
@@ -34,16 +30,13 @@ router.post("/", async (req, res) => {
                 : [];
 
 
-        /* =================================================
-           VALIDATE MESSAGE
-        ================================================= */
-
         if (!message) {
             return res.status(400).json({
                 ok: false,
                 error: "اكتب رسالة أولًا."
             });
         }
+
 
         if (
             message.length >
@@ -52,14 +45,10 @@ router.post("/", async (req, res) => {
             return res.status(400).json({
                 ok: false,
                 error:
-                    `الرسالة أطول من الحد المسموح (${MAX_MESSAGE_LENGTH} حرف).`
+                    "الرسالة أطول من 3000 حرف."
             });
         }
 
-
-        /* =================================================
-           CLEAN HISTORY
-        ================================================= */
 
         const cleanHistory =
             history
@@ -70,24 +59,20 @@ router.post("/", async (req, res) => {
                             item.role === "user" ||
                             item.role === "assistant"
                         ) &&
-                        typeof item.content === "string" &&
-                        item.content.trim()
+                        typeof item.content === "string"
                     );
                 })
                 .slice(-MAX_HISTORY)
                 .map(item => ({
                     role: item.role,
                     content:
-                        item.content.slice(
-                            0,
-                            MAX_MESSAGE_LENGTH
-                        )
+                        item.content
+                            .slice(
+                                0,
+                                MAX_MESSAGE_LENGTH
+                            )
                 }));
 
-
-        /* =================================================
-           GENERATE AI RESPONSE
-        ================================================= */
 
         const reply =
             await generateReply(
@@ -97,29 +82,23 @@ router.post("/", async (req, res) => {
             );
 
 
-        /* =================================================
-           RESPONSE
-        ================================================= */
-
-        return res.status(200).json({
+        return res.json({
             ok: true,
-            reply: String(reply)
+            reply
         });
 
     } catch (error) {
 
         console.error(
-            "Chat API Error:",
+            "Claude API Error:",
             error
         );
 
-        const errorMessage =
-            error?.message ||
-            "حدث خطأ أثناء معالجة الطلب.";
-
         return res.status(500).json({
             ok: false,
-            error: errorMessage
+            error:
+                error.message ||
+                "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي."
         });
     }
 });
