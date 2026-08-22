@@ -8,7 +8,6 @@ const router = express.Router();
 const MAX_MESSAGE_LENGTH = 3000;
 const MAX_HISTORY = 30;
 
-
 router.post("/", async (req, res) => {
     try {
         const body = req.body || {};
@@ -18,17 +17,10 @@ router.post("/", async (req, res) => {
                 ? body.message.trim()
                 : "";
 
-        const model =
-            typeof body.model === "string" &&
-            body.model.trim()
-                ? body.model.trim()
-                : undefined;
-
         const history =
             Array.isArray(body.history)
                 ? body.history
                 : [];
-
 
         if (!message) {
             return res.status(400).json({
@@ -36,7 +28,6 @@ router.post("/", async (req, res) => {
                 error: "اكتب رسالة أولًا."
             });
         }
-
 
         if (
             message.length >
@@ -49,38 +40,31 @@ router.post("/", async (req, res) => {
             });
         }
 
-
         const cleanHistory =
             history
-                .filter(item => {
-                    return (
-                        item &&
-                        (
-                            item.role === "user" ||
-                            item.role === "assistant"
-                        ) &&
-                        typeof item.content === "string"
-                    );
-                })
+                .filter(item =>
+                    item &&
+                    (
+                        item.role === "user" ||
+                        item.role === "assistant"
+                    ) &&
+                    typeof item.content === "string"
+                )
                 .slice(-MAX_HISTORY)
                 .map(item => ({
                     role: item.role,
                     content:
-                        item.content
-                            .slice(
-                                0,
-                                MAX_MESSAGE_LENGTH
-                            )
+                        item.content.slice(
+                            0,
+                            MAX_MESSAGE_LENGTH
+                        )
                 }));
-
 
         const reply =
             await generateReply(
                 message,
-                cleanHistory,
-                model
+                cleanHistory
             );
-
 
         return res.json({
             ok: true,
@@ -90,7 +74,7 @@ router.post("/", async (req, res) => {
     } catch (error) {
 
         console.error(
-            "Claude API Error:",
+            "Chat API Error:",
             error
         );
 
@@ -102,6 +86,5 @@ router.post("/", async (req, res) => {
         });
     }
 });
-
 
 module.exports = router;
