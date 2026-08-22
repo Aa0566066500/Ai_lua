@@ -5,7 +5,7 @@ const { generateReply } = require("../services/ai");
 
 const router = express.Router();
 
-const MAX_MESSAGE_LENGTH = 2000;
+const MAX_MESSAGE_LENGTH = 3000;
 const MAX_HISTORY = 30;
 
 
@@ -45,7 +45,6 @@ router.post("/", async (req, res) => {
             });
         }
 
-
         if (
             message.length >
             MAX_MESSAGE_LENGTH
@@ -53,7 +52,7 @@ router.post("/", async (req, res) => {
             return res.status(400).json({
                 ok: false,
                 error:
-                    "الرسالة أطول من الحد المسموح."
+                    `الرسالة أطول من الحد المسموح (${MAX_MESSAGE_LENGTH} حرف).`
             });
         }
 
@@ -71,21 +70,19 @@ router.post("/", async (req, res) => {
                             item.role === "user" ||
                             item.role === "assistant"
                         ) &&
-                        typeof item.content === "string"
+                        typeof item.content === "string" &&
+                        item.content.trim()
                     );
                 })
                 .slice(-MAX_HISTORY)
-                .map(item => {
-                    return {
-                        role: item.role,
-                        content:
-                            item.content
-                                .slice(
-                                    0,
-                                    MAX_MESSAGE_LENGTH
-                                )
-                    };
-                });
+                .map(item => ({
+                    role: item.role,
+                    content:
+                        item.content.slice(
+                            0,
+                            MAX_MESSAGE_LENGTH
+                        )
+                }));
 
 
         /* =================================================
@@ -104,7 +101,7 @@ router.post("/", async (req, res) => {
            RESPONSE
         ================================================= */
 
-        return res.json({
+        return res.status(200).json({
             ok: true,
             reply: String(reply)
         });
@@ -116,11 +113,13 @@ router.post("/", async (req, res) => {
             error
         );
 
+        const errorMessage =
+            error?.message ||
+            "حدث خطأ أثناء معالجة الطلب.";
 
         return res.status(500).json({
             ok: false,
-            error:
-                "حدث خطأ أثناء معالجة الطلب."
+            error: errorMessage
         });
     }
 });
