@@ -1,11 +1,5 @@
 "use strict";
 
-/*
-    =========================================================
-    Lua AI - Frontend
-    =========================================================
-*/
-
 const state = {
     messages: [],
     conversations: [],
@@ -15,368 +9,230 @@ const state = {
     controller: null
 };
 
+const MAX_MESSAGE_LENGTH = 3000;
+const MAX_HISTORY = 30;
 
-/* =========================================================
-   ELEMENTS
-========================================================= */
+const STORAGE_KEY = "ai_lua_roblox_v3";
+const THEME_KEY = "ai_lua_theme";
 
-const elements = {
-    sidebar: document.getElementById("sidebar"),
-    openSidebar: document.getElementById("openSidebar"),
-    closeSidebar: document.getElementById("closeSidebar"),
+const $ = id => document.getElementById(id);
 
-    newChatButton: document.getElementById("newChatButton"),
-    conversationList:
-        document.getElementById("conversationList"),
+const el = {
+    sidebar: $("sidebar"),
+    openSidebar: $("openSidebar"),
+    closeSidebar: $("closeSidebar"),
 
-    messageInput:
-        document.getElementById("messageInput"),
+    newChat: $("newChatButton"),
+    conversationList: $("conversationList"),
 
-    sendButton:
-        document.getElementById("sendButton"),
+    input: $("messageInput"),
+    send: $("sendButton"),
 
-    messages:
-        document.getElementById("messages"),
+    messages: $("messages"),
+    welcome: $("welcomeScreen"),
 
-    welcomeScreen:
-        document.getElementById("welcomeScreen"),
+    typing: $("typingContainer"),
 
-    typingContainer:
-        document.getElementById("typingContainer"),
+    attachment: $("attachmentButton"),
+    attachmentMenu: $("attachmentMenu"),
 
-    attachmentButton:
-        document.getElementById("attachmentButton"),
+    upload: $("uploadCode"),
+    paste: $("pasteCode"),
+    file: $("fileInput"),
 
-    attachmentMenu:
-        document.getElementById("attachmentMenu"),
+    counter: $("characterCounter"),
 
-    uploadCode:
-        document.getElementById("uploadCode"),
+    modelButton: $("modelButton"),
+    modelMenu: $("modelMenu"),
+    modelName: $("modelName"),
 
-    pasteCode:
-        document.getElementById("pasteCode"),
+    settings: $("settingsButton"),
+    settingsModal: $("settingsModal"),
+    closeSettings: $("closeSettings"),
 
-    fileInput:
-        document.getElementById("fileInput"),
+    theme: $("themeSelect"),
 
-    characterCounter:
-        document.getElementById("characterCounter"),
-
-    modelButton:
-        document.getElementById("modelButton"),
-
-    modelMenu:
-        document.getElementById("modelMenu"),
-
-    settingsButton:
-        document.getElementById("settingsButton"),
-
-    settingsModal:
-        document.getElementById("settingsModal"),
-
-    closeSettings:
-        document.getElementById("closeSettings"),
-
-    themeSelect:
-        document.getElementById("themeSelect"),
-
-    languageSelect:
-        document.getElementById("languageSelect"),
-
-    helpButton:
-        document.getElementById("helpButton"),
-
-    shareButton:
-        document.getElementById("shareButton"),
-
-    moreButton:
-        document.getElementById("moreButton"),
-
-    voiceButton:
-        document.getElementById("voiceButton")
+    help: $("helpButton"),
+    share: $("shareButton"),
+    more: $("moreButton")
 };
 
 
-/* =========================================================
-   CONSTANTS
-========================================================= */
-
-const STORAGE_KEY =
-    "lua_ai_state_v2";
-
-const THEME_KEY =
-    "lua_ai_theme";
-
-const MAX_MESSAGE_LENGTH =
-    2000;
-
-const MAX_HISTORY =
-    30;
-
-
-/* =========================================================
+/* ==============================
    ID
-========================================================= */
+============================== */
 
-function generateId() {
+function id() {
 
     if (
-        window.crypto &&
+        crypto &&
         typeof crypto.randomUUID === "function"
     ) {
         return crypto.randomUUID();
     }
 
-    return (
-        Date.now().toString(36) +
-        Math.random()
-            .toString(36)
-            .slice(2)
+    return Date.now() + Math.random();
+}
+
+
+/* ==============================
+   STORAGE
+============================== */
+
+function save() {
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+            conversations: state.conversations,
+            currentConversationId:
+                state.currentConversationId,
+            selectedModel:
+                state.selectedModel
+        })
     );
 }
 
 
-/* =========================================================
-   STORAGE
-========================================================= */
-
-function saveState() {
-
-    try {
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                conversations:
-                    state.conversations,
-
-                currentConversationId:
-                    state.currentConversationId,
-
-                selectedModel:
-                    state.selectedModel
-            })
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Could not save state:",
-            error
-        );
-    }
-}
-
-
-function loadState() {
+function load() {
 
     try {
 
         const raw =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
+            localStorage.getItem(STORAGE_KEY);
 
         if (!raw) {
-
-            createNewConversation(false);
-
+            createConversation(false);
             return;
         }
 
-
-        const saved =
-            JSON.parse(raw);
-
+        const data = JSON.parse(raw);
 
         state.conversations =
-            Array.isArray(
-                saved.conversations
-            )
-                ? saved.conversations
+            Array.isArray(data.conversations)
+                ? data.conversations
                 : [];
 
-
         state.currentConversationId =
-            saved.currentConversationId ||
-            null;
-
+            data.currentConversationId || null;
 
         state.selectedModel =
-            saved.selectedModel ||
-            "lua";
+            data.selectedModel || "lua";
 
-
-        if (
-            !state.conversations.length
-        ) {
-
-            createNewConversation(false);
-
+        if (!state.conversations.length) {
+            createConversation(false);
             return;
         }
 
-
-        const current =
-            getCurrentConversation();
-
-
-        if (!current) {
-
+        if (!getConversation()) {
             state.currentConversationId =
                 state.conversations[0].id;
         }
 
+        loadConversation();
 
-        loadCurrentConversation();
-
-    } catch (error) {
-
-        console.warn(
-            "Could not load saved state:",
-            error
-        );
+    } catch {
 
         state.conversations = [];
 
-        createNewConversation(false);
+        createConversation(false);
     }
 }
 
 
-/* =========================================================
+/* ==============================
    CONVERSATIONS
-========================================================= */
+============================== */
 
-function createNewConversation(
-    shouldSave = true
-) {
+function createConversation(saveIt = true) {
 
     const conversation = {
-
-        id: generateId(),
-
+        id: id(),
         title: "محادثة جديدة",
-
         createdAt: Date.now(),
-
         updatedAt: Date.now(),
-
         messages: []
     };
-
 
     state.conversations.unshift(
         conversation
     );
 
-
     state.currentConversationId =
         conversation.id;
 
-
     state.messages = [];
 
-
     renderConversations();
-
     renderMessages();
 
+    if (saveIt) save();
 
-    if (shouldSave) {
-        saveState();
-    }
-
-
-    closeSidebarMobile();
+    closeSidebar();
 }
 
 
-function getCurrentConversation() {
+function getConversation() {
 
     return state.conversations.find(
-        conversation =>
-            conversation.id ===
+        x =>
+            x.id ===
             state.currentConversationId
     );
 }
 
 
-function loadCurrentConversation() {
+function loadConversation() {
 
     const conversation =
-        getCurrentConversation();
-
+        getConversation();
 
     if (!conversation) {
-
-        createNewConversation();
-
+        createConversation();
         return;
     }
 
-
     state.messages =
-        Array.isArray(
-            conversation.messages
-        )
+        Array.isArray(conversation.messages)
             ? [...conversation.messages]
             : [];
 
-
     renderConversations();
-
     renderMessages();
 }
 
 
-function updateCurrentConversation() {
+function syncConversation() {
 
     const conversation =
-        getCurrentConversation();
+        getConversation();
 
-
-    if (!conversation) {
-        return;
-    }
-
+    if (!conversation) return;
 
     conversation.messages =
         [...state.messages];
 
-
     conversation.updatedAt =
         Date.now();
 
-
     if (
-        conversation.title ===
-            "محادثة جديدة" &&
-        state.messages.length > 0
+        conversation.title === "محادثة جديدة"
     ) {
 
-        const firstUserMessage =
+        const first =
             state.messages.find(
-                message =>
-                    message.role === "user"
+                x => x.role === "user"
             );
 
-
-        if (firstUserMessage) {
-
-            const title =
-                firstUserMessage.content
-                    .replace(/\s+/g, " ")
-                    .trim()
-                    .slice(0, 45);
-
+        if (first) {
 
             conversation.title =
-                title ||
-                "محادثة جديدة";
+                first.content
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .slice(0, 42);
         }
     }
-
 
     state.conversations.sort(
         (a, b) =>
@@ -384,112 +240,66 @@ function updateCurrentConversation() {
             a.updatedAt
     );
 
-
     renderConversations();
-
-    saveState();
+    save();
 }
 
 
 function renderConversations() {
 
-    if (!elements.conversationList) {
-        return;
-    }
+    el.conversationList.innerHTML = "";
 
-
-    elements.conversationList.innerHTML =
-        "";
-
-
-    for (
-        const conversation
-        of state.conversations
-    ) {
+    for (const conversation of state.conversations) {
 
         const button =
-            document.createElement(
-                "button"
-            );
-
+            document.createElement("button");
 
         button.className =
             "conversation-item";
-
 
         if (
             conversation.id ===
             state.currentConversationId
         ) {
-            button.classList.add(
-                "active"
-            );
+            button.classList.add("active");
         }
 
-
         button.textContent =
-            conversation.title ||
-            "محادثة جديدة";
+            conversation.title;
 
+        button.onclick = () => {
 
-        button.title =
-            conversation.title ||
-            "محادثة جديدة";
+            state.currentConversationId =
+                conversation.id;
 
+            loadConversation();
+            save();
+            closeSidebar();
+        };
 
-        button.addEventListener(
-            "click",
-            () => {
-
-                state.currentConversationId =
-                    conversation.id;
-
-
-                loadCurrentConversation();
-
-                saveState();
-
-                closeSidebarMobile();
-            }
+        el.conversationList.appendChild(
+            button
         );
-
-
-        elements.conversationList
-            .appendChild(button);
     }
 }
 
 
-/* =========================================================
+/* ==============================
    MESSAGES
-========================================================= */
+============================== */
 
-function addMessage(
-    role,
-    content
-) {
+function addMessage(role, content) {
 
     const message = {
-
-        id: generateId(),
-
+        id: id(),
         role,
-
-        content: String(
-            content || ""
-        ),
-
+        content: String(content || ""),
         createdAt: Date.now()
     };
 
+    state.messages.push(message);
 
-    state.messages.push(
-        message
-    );
-
-
-    updateCurrentConversation();
-
+    syncConversation();
 
     return message;
 }
@@ -497,117 +307,80 @@ function addMessage(
 
 function renderMessages() {
 
-    if (!elements.messages) {
-        return;
-    }
+    el.messages.innerHTML = "";
 
-
-    elements.messages.innerHTML =
-        "";
-
-
-    const hasMessages =
+    const has =
         state.messages.length > 0;
 
+    el.welcome.classList.toggle(
+        "hidden",
+        has
+    );
 
-    if (elements.welcomeScreen) {
+    for (const message of state.messages) {
 
-        elements.welcomeScreen.classList.toggle(
-            "hidden",
-            hasMessages
+        el.messages.appendChild(
+            createMessage(message)
         );
     }
 
-
-    for (
-        const message
-        of state.messages
-    ) {
-
-        elements.messages.appendChild(
-            createMessageElement(
-                message
-            )
-        );
-    }
-
-
-    scrollToBottom();
+    scrollBottom();
 }
 
 
-function createMessageElement(
-    message
-) {
+function createMessage(message) {
 
-    const wrapper =
-        document.createElement(
-            "article"
-        );
+    const article =
+        document.createElement("article");
 
-
-    wrapper.className =
+    article.className =
         `message ${message.role}`;
 
-
     const avatar =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     avatar.className =
         "message-avatar";
 
+    if (message.role === "assistant") {
 
-    avatar.textContent =
-        message.role === "user"
-            ? "أنت"
-            : "✦";
+        const img =
+            document.createElement("img");
 
+        img.src = "/logo.png";
+        img.alt = "";
+
+        avatar.appendChild(img);
+
+    } else {
+
+        avatar.textContent = "أنت";
+    }
 
     const body =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
-
-    body.className =
-        "message-body";
-
+    body.className = "message-body";
 
     const name =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
-
-    name.className =
-        "message-name";
-
+    name.className = "message-name";
 
     name.textContent =
-        message.role === "user"
-            ? "أنت"
-            : "Lua AI";
-
+        message.role === "assistant"
+            ? "AI_Lua_roblox"
+            : "أنت";
 
     const content =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     content.className =
         "message-content";
 
+    if (message.role === "assistant") {
 
-    if (
-        message.role ===
-        "assistant"
-    ) {
-
-        renderAssistantContent(
+        renderAssistant(
             content,
             message.content
         );
@@ -618,432 +391,246 @@ function createMessageElement(
             message.content;
     }
 
-
     body.appendChild(name);
-
     body.appendChild(content);
 
-    wrapper.appendChild(avatar);
+    article.appendChild(avatar);
+    article.appendChild(body);
 
-    wrapper.appendChild(body);
-
-
-    return wrapper;
+    return article;
 }
 
 
-/* =========================================================
-   CODE RENDERING
-========================================================= */
+/* ==============================
+   AI CONTENT
+============================== */
 
-function renderAssistantContent(
+function renderAssistant(
     container,
     text
 ) {
 
-    const source =
-        String(text || "");
+    const regex =
+        /```([\w-]*)\n?([\s\S]*?)```/g;
 
-
-    const codeRegex =
-        /```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g;
-
-
-    let lastIndex = 0;
-
+    let last = 0;
     let match;
 
-
     while (
-        (match =
-            codeRegex.exec(source)) !==
-        null
+        (match = regex.exec(text)) !== null
     ) {
 
         const before =
-            source.slice(
-                lastIndex,
-                match.index
-            );
-
+            text.slice(last, match.index);
 
         if (before) {
-
-            appendFormattedText(
-                container,
-                before
-            );
+            appendText(container, before);
         }
 
-
-        const language =
-            match[1] ||
-            "code";
-
-
-        const code =
-            match[2].replace(
-                /\n$/,
-                ""
-            );
-
-
         container.appendChild(
-            createCodeBlock(
-                language,
-                code
+            createCode(
+                match[1] || "code",
+                match[2].replace(/\n$/, "")
             )
         );
 
-
-        lastIndex =
-            codeRegex.lastIndex;
+        last = regex.lastIndex;
     }
-
 
     const remaining =
-        source.slice(
-            lastIndex
-        );
-
+        text.slice(last);
 
     if (remaining) {
-
-        appendFormattedText(
-            container,
-            remaining
-        );
+        appendText(container, remaining);
     }
 }
 
 
-function appendFormattedText(
-    container,
-    text
-) {
+function appendText(container, text) {
 
-    const block =
-        document.createElement(
-            "div"
-        );
+    const div =
+        document.createElement("div");
 
+    div.textContent = text;
 
-    block.textContent =
-        text;
+    div.style.whiteSpace = "pre-wrap";
 
-
-    block.style.whiteSpace =
-        "pre-wrap";
-
-
-    container.appendChild(
-        block
-    );
+    container.appendChild(div);
 }
 
 
-function createCodeBlock(
-    language,
-    code
-) {
+function createCode(language, code) {
 
     const wrapper =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     wrapper.className =
         "code-block";
 
-
     const header =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     header.className =
         "code-header";
 
+    const lang =
+        document.createElement("span");
 
-    const languageElement =
-        document.createElement(
-            "span"
-        );
-
-
-    languageElement.className =
+    lang.className =
         "code-language";
 
-
-    languageElement.textContent =
+    lang.textContent =
         language;
 
+    const copy =
+        document.createElement("button");
 
-    const copyButton =
-        document.createElement(
-            "button"
-        );
-
-
-    copyButton.className =
+    copy.className =
         "copy-code";
 
-
-    copyButton.textContent =
+    copy.textContent =
         "نسخ";
 
+    copy.onclick = async () => {
 
-    copyButton.addEventListener(
-        "click",
-        async () => {
+        try {
 
-            try {
+            await navigator.clipboard.writeText(
+                code
+            );
 
-                await navigator
-                    .clipboard
-                    .writeText(code);
+            copy.textContent =
+                "تم النسخ";
 
+            setTimeout(
+                () => copy.textContent = "نسخ",
+                1500
+            );
 
-                copyButton.textContent =
-                    "تم النسخ";
+        } catch {
 
-
-                setTimeout(
-                    () => {
-
-                        copyButton.textContent =
-                            "نسخ";
-
-                    },
-                    1500
-                );
-
-            } catch {
-
-                copyButton.textContent =
-                    "فشل النسخ";
-            }
+            copy.textContent =
+                "فشل النسخ";
         }
-    );
+    };
 
-
-    header.appendChild(
-        languageElement
-    );
-
-
-    header.appendChild(
-        copyButton
-    );
-
+    header.appendChild(lang);
+    header.appendChild(copy);
 
     const pre =
-        document.createElement(
-            "pre"
-        );
-
+        document.createElement("pre");
 
     const codeElement =
-        document.createElement(
-            "code"
-        );
+        document.createElement("code");
 
+    codeElement.textContent = code;
 
-    codeElement.textContent =
-        code;
+    pre.appendChild(codeElement);
 
-
-    pre.appendChild(
-        codeElement
-    );
-
-
-    wrapper.appendChild(
-        header
-    );
-
-
-    wrapper.appendChild(
-        pre
-    );
-
+    wrapper.appendChild(header);
+    wrapper.appendChild(pre);
 
     return wrapper;
 }
 
 
-/* =========================================================
+/* ==============================
    INPUT
-========================================================= */
+============================== */
 
-function updateComposer() {
+function updateInput() {
 
-    const input =
-        elements.messageInput;
+    const value = el.input.value;
 
+    el.counter.textContent =
+        `${value.length} / ${MAX_MESSAGE_LENGTH}`;
 
-    if (!input) {
-        return;
-    }
+    el.input.style.height = "auto";
 
-
-    const value =
-        input.value;
-
-
-    if (
-        elements.characterCounter
-    ) {
-
-        elements.characterCounter.textContent =
-            `${value.length} / ${MAX_MESSAGE_LENGTH}`;
-    }
-
-
-    if (
-        elements.sendButton
-    ) {
-
-        elements.sendButton.disabled =
-            !value.trim() ||
-            state.isGenerating;
-    }
-
-
-    input.style.height =
-        "auto";
-
-
-    input.style.height =
+    el.input.style.height =
         Math.min(
-            input.scrollHeight,
-            180
+            el.input.scrollHeight,
+            190
         ) + "px";
+
+    if (!state.isGenerating) {
+
+        el.send.disabled =
+            !value.trim();
+    }
 }
 
 
 function clearInput() {
 
-    if (!elements.messageInput) {
-        return;
-    }
+    el.input.value = "";
 
-
-    elements.messageInput.value =
-        "";
-
-
-    elements.messageInput.style.height =
-        "auto";
-
-
-    updateComposer();
+    updateInput();
 }
 
 
-/* =========================================================
-   BUILD HISTORY
-========================================================= */
+/* ==============================
+   HISTORY
+============================== */
 
-function buildHistory() {
+function history() {
 
     return state.messages
         .slice(-MAX_HISTORY)
-        .map(message => {
+        .map(message => ({
+            role:
+                message.role === "assistant"
+                    ? "assistant"
+                    : "user",
 
-            return {
-
-                role:
-                    message.role ===
-                    "assistant"
-                        ? "assistant"
-                        : "user",
-
-                content:
-                    String(
-                        message.content || ""
-                    )
-            };
-        });
+            content:
+                String(message.content)
+        }));
 }
 
 
-/* =========================================================
-   SEND MESSAGE
-========================================================= */
+/* ==============================
+   SEND
+============================== */
 
-async function sendMessage(
-    text = null
-) {
+async function sendMessage(text = null) {
 
-    if (
-        state.isGenerating
-    ) {
-        return;
-    }
-
+    if (state.isGenerating) return;
 
     const message =
         text !== null
             ? String(text).trim()
-            : elements.messageInput
-                .value
-                .trim();
+            : el.input.value.trim();
 
-
-    if (!message) {
-        return;
-    }
-
+    if (!message) return;
 
     if (
         message.length >
         MAX_MESSAGE_LENGTH
     ) {
 
-        showTemporaryNotice(
-            "الرسالة طويلة جدًا."
+        notice(
+            "الحد الأقصى للرسالة 3000 حرف."
         );
 
         return;
     }
 
-
     clearInput();
-
-
-    /*
-        نضيف رسالة المستخدم أولًا.
-    */
 
     addMessage(
         "user",
         message
     );
 
-
     renderMessages();
-
 
     setGenerating(true);
 
+    state.controller =
+        new AbortController();
 
     try {
-
-        state.controller =
-            new AbortController();
-
-
-        /*
-            سجل المحادثة بعد إضافة
-            رسالة المستخدم.
-        */
-
-        const history =
-            buildHistory();
-
 
         const response =
             await fetch(
@@ -1058,38 +645,20 @@ async function sendMessage(
 
                     body:
                         JSON.stringify({
-
                             message,
-
                             model:
                                 state.selectedModel,
-
-                            history
-
+                            history:
+                                history()
                         }),
 
                     signal:
-                        state.controller
-                            .signal
+                        state.controller.signal
                 }
             );
 
-
-        let data;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch {
-
-            throw new Error(
-                "تعذر قراءة رد الخادم."
-            );
-        }
-
+        const data =
+            await response.json();
 
         if (
             !response.ok ||
@@ -1098,17 +667,12 @@ async function sendMessage(
 
             throw new Error(
                 data.error ||
-                "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي."
+                "حدث خطأ في الخادم."
             );
         }
 
-
         const reply =
-            String(
-                data.reply ||
-                ""
-            ).trim();
-
+            String(data.reply || "").trim();
 
         if (!reply) {
 
@@ -1117,662 +681,301 @@ async function sendMessage(
             );
         }
 
-
         addMessage(
             "assistant",
             reply
         );
 
-
         renderMessages();
-
 
     } catch (error) {
 
         if (
-            error.name ===
-            "AbortError"
+            error.name === "AbortError"
         ) {
             return;
         }
 
-
-        console.error(
-            "Chat error:",
-            error
-        );
-
+        console.error(error);
 
         addMessage(
             "assistant",
-            "حدث خطأ أثناء معالجة طلبك.\n\n" +
+            "تعذر الحصول على الرد.\n\n" +
             error.message
         );
 
-
         renderMessages();
-
 
     } finally {
 
-        state.controller =
-            null;
+        state.controller = null;
 
-
-        setGenerating(
-            false
-        );
+        setGenerating(false);
     }
 }
 
 
-/* =========================================================
-   STOP GENERATION
-========================================================= */
+/* ==============================
+   GENERATING
+============================== */
+
+function setGenerating(value) {
+
+    state.isGenerating = value;
+
+    el.typing.classList.toggle(
+        "hidden",
+        !value
+    );
+
+    if (value) {
+
+        el.send.disabled = false;
+
+        el.send.textContent = "■";
+
+        el.send.title = "إيقاف";
+
+    } else {
+
+        el.send.textContent = "↑";
+
+        el.send.title = "إرسال";
+
+        el.send.disabled =
+            !el.input.value.trim();
+    }
+
+    if (value) {
+        scrollBottom();
+    }
+}
+
 
 function stopGeneration() {
 
-    if (
-        state.controller
-    ) {
+    if (state.controller) {
 
         state.controller.abort();
 
-        state.controller =
-            null;
+        state.controller = null;
     }
 
-
-    setGenerating(
-        false
-    );
+    setGenerating(false);
 }
 
 
-function setGenerating(
-    value
-) {
-
-    state.isGenerating =
-        value;
-
-
-    if (
-        elements.typingContainer
-    ) {
-
-        elements.typingContainer.classList.toggle(
-            "hidden",
-            !value
-        );
-    }
-
-
-    if (
-        elements.sendButton
-    ) {
-
-        /*
-            نخلي زر الإرسال يتعطل أثناء
-            التوليد حاليًا.
-        */
-
-        elements.sendButton.disabled =
-            value ||
-            !elements.messageInput
-                .value
-                .trim();
-    }
-
-
-    updateComposer();
-
-
-    if (value) {
-        scrollToBottom();
-    }
-}
-
-
-/* =========================================================
-   QUICK PROMPTS
-========================================================= */
-
-function setupQuickPrompts() {
-
-    const prompts =
-        document.querySelectorAll(
-            ".prompt-card"
-        );
-
-
-    prompts.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const prompt =
-                        button.dataset
-                            .prompt;
-
-
-                    if (prompt) {
-
-                        sendMessage(
-                            prompt
-                        );
-                    }
-                }
-            );
-        }
-    );
-}
-
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-function openSidebarMobile() {
-
-    elements.sidebar?.classList.add(
-        "open"
-    );
-}
-
-
-function closeSidebarMobile() {
-
-    elements.sidebar?.classList.remove(
-        "open"
-    );
-}
-
-
-/* =========================================================
+/* ==============================
    MODEL
-========================================================= */
+============================== */
 
-function toggleModelMenu() {
-
-    if (
-        !elements.modelMenu
-    ) {
-        return;
-    }
-
-
-    elements.modelMenu.classList.toggle(
-        "hidden"
-    );
-
-
-    const expanded =
-        !elements.modelMenu
-            .classList.contains(
-                "hidden"
-            );
-
-
-    elements.modelButton?.setAttribute(
-        "aria-expanded",
-        String(expanded)
-    );
-}
-
-
-function selectModel(
-    model
-) {
-
-    if (
-        model !== "lua" &&
-        model !== "general"
-    ) {
-        model = "lua";
-    }
-
+function selectModel(model) {
 
     state.selectedModel =
-        model;
+        model === "general"
+            ? "general"
+            : "lua";
 
+    el.modelName.textContent =
+        state.selectedModel === "lua"
+            ? "AI_Lua_roblox"
+            : "General AI";
 
     document
-        .querySelectorAll(
-            ".model-option"
-        )
+        .querySelectorAll(".model-option")
         .forEach(option => {
 
             option.classList.toggle(
                 "active",
                 option.dataset.model ===
-                    model
+                    state.selectedModel
             );
         });
 
+    el.modelMenu.classList.add("hidden");
 
-    const modelName =
-        document.querySelector(
-            ".model-name"
-        );
-
-
-    if (modelName) {
-
-        modelName.textContent =
-            model === "lua"
-                ? "Lua AI"
-                : "General AI";
-    }
-
-
-    elements.modelMenu?.classList.add(
-        "hidden"
-    );
-
-
-    saveState();
+    save();
 }
 
 
-/* =========================================================
-   SETTINGS
-========================================================= */
+/* ==============================
+   THEME
+============================== */
 
-function openSettings() {
-
-    elements.settingsModal?.classList.remove(
-        "hidden"
-    );
-}
-
-
-function closeSettings() {
-
-    elements.settingsModal?.classList.add(
-        "hidden"
-    );
-}
-
-
-function applyTheme(
-    theme
-) {
-
-    const validTheme =
-        theme === "light"
-            ? "light"
-            : "dark";
-
+function applyTheme(theme) {
 
     document.body.classList.toggle(
         "light",
-        validTheme === "light"
+        theme === "light"
     );
-
 
     localStorage.setItem(
         THEME_KEY,
-        validTheme
-    );
-
-
-    if (
-        elements.themeSelect
-    ) {
-
-        elements.themeSelect.value =
-            validTheme;
-    }
-}
-
-
-function loadTheme() {
-
-    const theme =
-        localStorage.getItem(
-            THEME_KEY
-        ) || "dark";
-
-
-    applyTheme(
         theme
     );
 }
 
 
-/* =========================================================
+/* ==============================
    FILES
-========================================================= */
+============================== */
 
-function toggleAttachmentMenu() {
+async function handleFile(file) {
 
-    elements.attachmentMenu?.classList.toggle(
-        "hidden"
-    );
-}
-
-
-function openFilePicker() {
-
-    elements.fileInput?.click();
-
-
-    elements.attachmentMenu?.classList.add(
-        "hidden"
-    );
-}
-
-
-async function handleFile(
-    file
-) {
-
-    if (!file) {
-        return;
-    }
-
-
-    const allowedExtensions = [
-        ".lua",
-        ".luau",
-        ".txt",
-        ".js",
-        ".json",
-        ".md"
-    ];
-
-
-    const fileName =
-        file.name.toLowerCase();
-
+    if (!file) return;
 
     const allowed =
-        allowedExtensions.some(
-            extension =>
-                fileName.endsWith(
-                    extension
-                )
-        );
-
+        /\.(lua|luau|txt|js|json|md)$/i
+            .test(file.name);
 
     if (!allowed) {
 
-        showTemporaryNotice(
-            "نوع الملف غير مدعوم."
+        notice(
+            "هذا النوع من الملفات غير مدعوم."
         );
 
         return;
     }
 
+    if (file.size > 1024 * 1024) {
 
-    if (
-        file.size >
-        1024 * 1024
-    ) {
-
-        showTemporaryNotice(
-            "حجم الملف أكبر من 1MB."
+        notice(
+            "حجم الملف يجب أن يكون أقل من 1MB."
         );
 
         return;
     }
-
 
     try {
 
         const content =
             await file.text();
 
-
-        elements.messageInput.value =
-            `راجع هذا الملف: ${file.name}\n\n` +
+        el.input.value =
+            `حلل هذا الملف: ${file.name}\n\n` +
             "```lua\n" +
             content +
             "\n```";
 
+        updateInput();
 
-        updateComposer();
+        el.input.focus();
 
+    } catch {
 
-        elements.messageInput.focus();
-
-
-    } catch (error) {
-
-        console.error(
-            "File error:",
-            error
-        );
-
-
-        showTemporaryNotice(
+        notice(
             "تعذر قراءة الملف."
         );
     }
 }
 
 
-/* =========================================================
-   HELP
-========================================================= */
+/* ==============================
+   SIDEBAR
+============================== */
 
-function showHelp() {
+function openSidebar() {
 
-    showTemporaryNotice(
-        "اكتب سؤالك عن Lua أو Roblox Studio، أو ارفع ملف كود لتحليله."
-    );
+    el.sidebar.classList.add("open");
 }
 
 
-/* =========================================================
-   SHARE
-========================================================= */
+function closeSidebar() {
 
-async function shareConversation() {
-
-    const conversation =
-        getCurrentConversation();
-
-
-    if (!conversation) {
-        return;
-    }
-
-
-    const text =
-        conversation.messages
-            .map(message => {
-
-                const name =
-                    message.role ===
-                    "user"
-                        ? "أنت"
-                        : "Lua AI";
-
-
-                return (
-                    `${name}:\n` +
-                    message.content
-                );
-            })
-            .join("\n\n");
-
-
-    try {
-
-        if (
-            typeof navigator.share ===
-            "function"
-        ) {
-
-            await navigator.share({
-
-                title:
-                    conversation.title,
-
-                text
-            });
-
-            return;
-        }
-
-
-        await navigator.clipboard
-            .writeText(text);
-
-
-        showTemporaryNotice(
-            "تم نسخ المحادثة."
-        );
-
-
-    } catch (error) {
-
-        console.warn(
-            "Share error:",
-            error
-        );
-    }
+    el.sidebar.classList.remove("open");
 }
 
 
-/* =========================================================
-   MORE
-========================================================= */
-
-function showMoreMenu() {
-
-    showTemporaryNotice(
-        "خيارات إضافية للمحادثة سيتم إضافتها لاحقًا."
-    );
-}
-
-
-/* =========================================================
+/* ==============================
    NOTICE
-========================================================= */
+============================== */
 
-let noticeTimer =
-    null;
+let noticeTimer;
 
+function notice(message) {
 
-function showTemporaryNotice(
-    message
-) {
-
-    let notice =
+    let box =
         document.getElementById(
-            "temporaryNotice"
+            "notice"
         );
 
+    if (!box) {
 
-    if (!notice) {
+        box =
+            document.createElement("div");
 
-        notice =
-            document.createElement(
-                "div"
-            );
-
-
-        notice.id =
-            "temporaryNotice";
-
+        box.id = "notice";
 
         Object.assign(
-            notice.style,
+            box.style,
             {
-
                 position: "fixed",
-
-                bottom: "95px",
-
                 left: "50%",
-
+                bottom: "100px",
                 transform:
                     "translateX(-50%)",
-
-                zIndex: "999",
-
-                maxWidth: "90%",
-
-                padding:
-                    "11px 16px",
-
-                borderRadius:
-                    "12px",
-
-                background:
-                    "#1b1b22",
-
-                color:
-                    "#ffffff",
-
+                zIndex: 9999,
+                padding: "11px 16px",
+                borderRadius: "12px",
+                background: "#191c25",
+                color: "white",
                 border:
                     "1px solid rgba(255,255,255,.1)",
-
                 boxShadow:
-                    "0 15px 40px rgba(0,0,0,.35)",
-
-                fontSize:
-                    "13px",
-
-                textAlign:
-                    "center",
-
-                transition:
-                    "opacity .2s ease"
+                    "0 20px 50px rgba(0,0,0,.4)",
+                fontSize: "13px"
             }
         );
 
-
-        document.body.appendChild(
-            notice
-        );
+        document.body.appendChild(box);
     }
 
+    box.textContent = message;
 
-    notice.textContent =
-        message;
-
-
-    notice.style.opacity =
-        "1";
-
-
-    clearTimeout(
-        noticeTimer
-    );
-
+    clearTimeout(noticeTimer);
 
     noticeTimer =
         setTimeout(
-            () => {
-
-                notice.style.opacity =
-                    "0";
-
-            },
-            2500
+            () => box.remove(),
+            2600
         );
 }
 
 
-/* =========================================================
+/* ==============================
+   SCROLL
+============================== */
+
+function scrollBottom() {
+
+    requestAnimationFrame(() => {
+
+        el.chat =
+            document.getElementById(
+                "chatContainer"
+            );
+
+        if (el.chat) {
+
+            el.chat.scrollTop =
+                el.chat.scrollHeight;
+        }
+    });
+}
+
+
+/* ==============================
    EVENTS
-========================================================= */
+============================== */
 
-function setupEvents() {
+function events() {
 
-    elements.messageInput?.addEventListener(
+    el.input.addEventListener(
         "input",
-        updateComposer
+        updateInput
     );
 
-
-    elements.messageInput?.addEventListener(
+    el.input.addEventListener(
         "keydown",
         event => {
 
@@ -1788,293 +991,234 @@ function setupEvents() {
         }
     );
 
+    el.send.onclick = () => {
 
-    elements.sendButton?.addEventListener(
-        "click",
-        () => {
+        if (state.isGenerating) {
 
-            if (
-                state.isGenerating
-            ) {
+            stopGeneration();
 
-                stopGeneration();
+        } else {
+
+            sendMessage();
+        }
+    };
+
+    el.newChat.onclick =
+        () => createConversation();
+
+    el.openSidebar.onclick =
+        openSidebar;
+
+    el.closeSidebar.onclick =
+        closeSidebar;
+
+    el.modelButton.onclick = () => {
+
+        el.modelMenu.classList.toggle(
+            "hidden"
+        );
+    };
+
+    document
+        .querySelectorAll(".model-option")
+        .forEach(option => {
+
+            option.onclick = () =>
+                selectModel(
+                    option.dataset.model
+                );
+        });
+
+    el.settings.onclick = () => {
+
+        el.settingsModal.classList.remove(
+            "hidden"
+        );
+    };
+
+    el.closeSettings.onclick = () => {
+
+        el.settingsModal.classList.add(
+            "hidden"
+        );
+    };
+
+    el.theme.onchange = event =>
+        applyTheme(
+            event.target.value
+        );
+
+    el.attachment.onclick = () => {
+
+        el.attachmentMenu.classList.toggle(
+            "hidden"
+        );
+    };
+
+    el.upload.onclick = () => {
+
+        el.file.click();
+
+        el.attachmentMenu.classList.add(
+            "hidden"
+        );
+    };
+
+    el.file.onchange = event => {
+
+        handleFile(
+            event.target.files[0]
+        );
+
+        event.target.value = "";
+    };
+
+    el.paste.onclick = async () => {
+
+        try {
+
+            el.input.value =
+                await navigator.clipboard
+                    .readText();
+
+            updateInput();
+            el.input.focus();
+
+        } catch {
+
+            notice(
+                "تعذر قراءة الحافظة."
+            );
+        }
+
+        el.attachmentMenu.classList.add(
+            "hidden"
+        );
+    };
+
+    el.help.onclick = () => {
+
+        notice(
+            "اكتب سؤالًا عن Roblox أو Luau أو ارفع ملف كود."
+        );
+    };
+
+    el.share.onclick = async () => {
+
+        const conversation =
+            getConversation();
+
+        if (!conversation) return;
+
+        const text =
+            conversation.messages
+                .map(x =>
+                    `${x.role === "user" ? "أنت" : "AI_Lua_roblox"}:\n${x.content}`
+                )
+                .join("\n\n");
+
+        try {
+
+            if (navigator.share) {
+
+                await navigator.share({
+                    title:
+                        conversation.title,
+                    text
+                });
 
             } else {
 
-                sendMessage();
-            }
-        }
-    );
+                await navigator.clipboard
+                    .writeText(text);
 
-
-    elements.newChatButton?.addEventListener(
-        "click",
-        () => {
-
-            createNewConversation();
-        }
-    );
-
-
-    elements.openSidebar?.addEventListener(
-        "click",
-        openSidebarMobile
-    );
-
-
-    elements.closeSidebar?.addEventListener(
-        "click",
-        closeSidebarMobile
-    );
-
-
-    elements.modelButton?.addEventListener(
-        "click",
-        toggleModelMenu
-    );
-
-
-    document
-        .querySelectorAll(
-            ".model-option"
-        )
-        .forEach(option => {
-
-            option.addEventListener(
-                "click",
-                () => {
-
-                    selectModel(
-                        option.dataset
-                            .model
-                    );
-                }
-            );
-        });
-
-
-    elements.settingsButton?.addEventListener(
-        "click",
-        openSettings
-    );
-
-
-    elements.closeSettings?.addEventListener(
-        "click",
-        closeSettings
-    );
-
-
-    elements.settingsModal?.addEventListener(
-        "click",
-        event => {
-
-            if (
-                event.target ===
-                elements.settingsModal
-            ) {
-
-                closeSettings();
-            }
-        }
-    );
-
-
-    elements.themeSelect?.addEventListener(
-        "change",
-        event => {
-
-            applyTheme(
-                event.target.value
-            );
-        }
-    );
-
-
-    elements.helpButton?.addEventListener(
-        "click",
-        showHelp
-    );
-
-
-    elements.shareButton?.addEventListener(
-        "click",
-        shareConversation
-    );
-
-
-    elements.moreButton?.addEventListener(
-        "click",
-        showMoreMenu
-    );
-
-
-    elements.attachmentButton?.addEventListener(
-        "click",
-        toggleAttachmentMenu
-    );
-
-
-    elements.uploadCode?.addEventListener(
-        "click",
-        openFilePicker
-    );
-
-
-    elements.fileInput?.addEventListener(
-        "change",
-        event => {
-
-            const file =
-                event.target.files?.[0];
-
-
-            handleFile(
-                file
-            );
-
-
-            event.target.value =
-                "";
-        }
-    );
-
-
-    elements.pasteCode?.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                const text =
-                    await navigator
-                        .clipboard
-                        .readText();
-
-
-                elements.messageInput.value =
-                    text;
-
-
-                updateComposer();
-
-
-                elements.messageInput.focus();
-
-
-            } catch {
-
-                showTemporaryNotice(
-                    "تعذر الوصول إلى الحافظة."
+                notice(
+                    "تم نسخ المحادثة."
                 );
             }
 
+        } catch {}
+    };
 
-            elements.attachmentMenu?.classList.add(
-                "hidden"
-            );
-        }
-    );
+    el.more.onclick = () => {
 
-
-    elements.voiceButton?.addEventListener(
-        "click",
-        () => {
-
-            showTemporaryNotice(
-                "ميزة الصوت غير مفعلة حاليًا."
-            );
-        }
-    );
-
+        notice(
+            "المزيد من أدوات المحادثة قريبًا."
+        );
+    };
 
     document.addEventListener(
         "click",
         event => {
 
             if (
-                elements.modelMenu &&
-                elements.modelButton &&
-                !elements.modelMenu.contains(
+                !el.modelMenu.contains(
                     event.target
                 ) &&
-                !elements.modelButton.contains(
+                !el.modelButton.contains(
                     event.target
                 )
             ) {
 
-                elements.modelMenu.classList.add(
+                el.modelMenu.classList.add(
                     "hidden"
                 );
             }
-
 
             if (
-                elements.attachmentMenu &&
-                elements.attachmentButton &&
-                !elements.attachmentMenu.contains(
+                !el.attachmentMenu.contains(
                     event.target
                 ) &&
-                !elements.attachmentButton.contains(
+                !el.attachment.contains(
                     event.target
                 )
             ) {
 
-                elements.attachmentMenu.classList.add(
+                el.attachmentMenu.classList.add(
                     "hidden"
                 );
             }
         }
     );
-}
 
+    document
+        .querySelectorAll(".quick-card")
+        .forEach(card => {
 
-/* =========================================================
-   SCROLL
-========================================================= */
+            card.onclick = () => {
 
-function scrollToBottom() {
-
-    requestAnimationFrame(
-        () => {
-
-            const container =
-                document.getElementById(
-                    "chatContainer"
+                sendMessage(
+                    card.dataset.prompt
                 );
-
-
-            if (container) {
-
-                container.scrollTop =
-                    container.scrollHeight;
-            }
-        }
-    );
+            };
+        });
 }
 
 
-/* =========================================================
-   INITIALIZATION
-========================================================= */
+/* ==============================
+   INIT
+============================== */
 
 function init() {
 
-    loadTheme();
+    const theme =
+        localStorage.getItem(
+            THEME_KEY
+        ) || "dark";
 
-    loadState();
+    applyTheme(theme);
 
-    setupEvents();
+    el.theme.value = theme;
 
-    setupQuickPrompts();
+    load();
 
-    updateComposer();
-
+    events();
 
     selectModel(
         state.selectedModel
     );
-}
 
+    updateInput();
+}
 
 init();
