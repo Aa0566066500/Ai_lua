@@ -2,588 +2,334 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="theme-color" content="#0b0b0f">
+    <meta name="description" content="AI_Lua_roblox - ذكاء اصطناعي متخصص في Roblox Studio وLuau">
 
-    <meta
-        name="description"
-        content="Lua AI - مساعد ذكاء اصطناعي متخصص في Lua وLuau وRoblox Studio"
-    >
-
-    <meta
-        name="theme-color"
-        content="#0b0b0f"
-    >
-
-    <title>Lua AI</title>
+    <title>AI_Lua_roblox</title>
 
     <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-    <div id="app">
+<div id="app">
 
-        <!-- Sidebar -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
 
-        <aside
-            class="sidebar"
-            id="sidebar"
-        >
-
-            <div class="sidebar-header">
-
-                <div class="brand">
-
-                    <div class="brand-icon">
-                        ✦
-                    </div>
-
-                    <div class="brand-text">
-
-                        <strong>
-                            Lua AI
-                        </strong>
-
-                        <span>
-                            Roblox Assistant
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <button
-                    class="icon-button mobile-close"
-                    id="closeSidebar"
-                    aria-label="إغلاق القائمة"
-                >
-                    ×
-                </button>
-
+        <div class="brand">
+            <div class="logo-box">
+                <img src="/logo.png" alt="AI_Lua_roblox">
             </div>
 
+            <div class="brand-info">
+                <strong>AI_Lua_roblox</strong>
+                <span>Roblox AI Assistant</span>
+            </div>
 
-            <button
-                class="new-chat-button"
-                id="newChatButton"
-            >
+            <button class="close-sidebar" id="closeSidebar">×</button>
+        </div>
 
-                <span class="new-chat-icon">
-                    +
-                </span>
+        <button class="new-chat" id="newChatButton">
+            <span>＋</span>
+            <b>محادثة جديدة</b>
+        </button>
 
-                <span>
-                    محادثة جديدة
-                </span>
+        <div class="history-title">المحادثات</div>
 
+        <div class="conversation-list" id="conversationList"></div>
+
+        <div class="sidebar-footer">
+
+            <button id="settingsButton">
+                <span>⚙</span>
+                الإعدادات
             </button>
 
+            <button id="helpButton">
+                <span>?</span>
+                المساعدة
+            </button>
 
-            <div class="sidebar-section">
+        </div>
 
-                <div class="sidebar-title">
-                    المحادثات
-                </div>
-
-                <div
-                    class="conversation-list"
-                    id="conversationList"
-                ></div>
-
-            </div>
+    </aside>
 
 
-            <div class="sidebar-bottom">
+    <!-- MAIN -->
+    <main class="main">
 
-                <button
-                    class="sidebar-action"
-                    id="settingsButton"
-                >
+        <!-- TOPBAR -->
+        <header class="topbar">
 
-                    <span>
-                        ⚙
-                    </span>
+            <button class="mobile-menu" id="openSidebar">
+                ☰
+            </button>
 
-                    <span>
-                        الإعدادات
-                    </span>
+            <div class="model-area">
 
-                </button>
+                <button class="model-button" id="modelButton">
 
-
-                <button
-                    class="sidebar-action"
-                    id="helpButton"
-                >
-
-                    <span>
-                        ?
-                    </span>
-
-                    <span>
-                        المساعدة
-                    </span>
-
-                </button>
-
-            </div>
-
-        </aside>
-
-
-        <!-- Main -->
-
-        <main class="main">
-
-            <!-- Topbar -->
-
-            <header class="topbar">
-
-                <button
-                    class="icon-button menu-button"
-                    id="openSidebar"
-                    aria-label="فتح القائمة"
-                >
-                    ☰
-                </button>
-
-
-                <div class="model-selector">
-
-                    <button
-                        class="model-button"
-                        id="modelButton"
-                        aria-expanded="false"
-                    >
-
-                        <span class="model-name">
-                            Lua AI
-                        </span>
-
-                        <span class="model-badge">
-                            Pro
-                        </span>
-
-                        <span class="model-arrow">
-                            ▾
-                        </span>
-
-                    </button>
-
-
-                    <div
-                        class="model-menu hidden"
-                        id="modelMenu"
-                    >
-
-                        <button
-                            class="model-option active"
-                            data-model="lua"
-                        >
-
-                            <strong>
-                                Lua AI
-                            </strong>
-
-                            <small>
-                                متخصص في Roblox وLuau
-                            </small>
-
-                        </button>
-
-
-                        <button
-                            class="model-option"
-                            data-model="general"
-                        >
-
-                            <strong>
-                                General AI
-                            </strong>
-
-                            <small>
-                                مساعد عام
-                            </small>
-
-                        </button>
-
+                    <div class="model-mini-logo">
+                        <img src="/logo.png" alt="">
                     </div>
-
-                </div>
-
-
-                <div class="topbar-actions">
-
-                    <button
-                        class="icon-button"
-                        id="shareButton"
-                        title="مشاركة"
-                    >
-                        ↗
-                    </button>
-
-
-                    <button
-                        class="icon-button"
-                        id="moreButton"
-                        title="المزيد"
-                    >
-                        ⋯
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <!-- Chat -->
-
-            <section
-                class="chat-container"
-                id="chatContainer"
-            >
-
-                <!-- Welcome -->
-
-                <div
-                    class="welcome-screen"
-                    id="welcomeScreen"
-                >
-
-                    <div class="welcome-icon">
-                        ✦
-                    </div>
-
-
-                    <h1>
-                        وش تبي نبني اليوم؟
-                    </h1>
-
-
-                    <p>
-                        مساعدك الذكي لبرمجة
-                        <strong>
-                            Lua وRoblox Studio
-                        </strong>
-                    </p>
-
-
-                    <div class="quick-prompts">
-
-                        <button
-                            class="prompt-card"
-                            data-prompt="اكتب لي نظام RemoteEvent آمن في Roblox Studio واشرح لي أين أضع كل ملف."
-                        >
-
-                            <span class="prompt-icon">
-                                🛡
-                            </span>
-
-                            <span>
-                                نظام RemoteEvent آمن
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            class="prompt-card"
-                            data-prompt="اشرح لي Luau من الصفر بطريقة سهلة مع أمثلة عملية."
-                        >
-
-                            <span class="prompt-icon">
-                                📚
-                            </span>
-
-                            <span>
-                                تعلم Luau
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            class="prompt-card"
-                            data-prompt="راجع هذا الكود وابحث عن الأخطاء والثغرات الأمنية وحسنه."
-                        >
-
-                            <span class="prompt-icon">
-                                🔍
-                            </span>
-
-                            <span>
-                                فحص الكود
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            class="prompt-card"
-                            data-prompt="صمم لي نظام كامل للعبة Roblox واشرح لي ترتيب الملفات والسكريبتات."
-                        >
-
-                            <span class="prompt-icon">
-                                ⚡
-                            </span>
-
-                            <span>
-                                بناء نظام كامل
-                            </span>
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Messages -->
-
-                <div
-                    class="messages"
-                    id="messages"
-                ></div>
-
-
-                <!-- Typing -->
-
-                <div
-                    class="typing-container hidden"
-                    id="typingContainer"
-                >
-
-                    <div class="ai-avatar">
-                        ✦
-                    </div>
-
-
-                    <div class="typing-content">
-
-                        <span class="typing-text">
-                            يفكر...
-                        </span>
-
-
-                        <div class="typing-dots">
-
-                            <span></span>
-                            <span></span>
-                            <span></span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- Composer -->
-
-            <footer class="composer-area">
-
-                <div class="composer-wrapper">
-
-
-                    <div
-                        class="attachment-menu hidden"
-                        id="attachmentMenu"
-                    >
-
-                        <button id="uploadCode">
-                            📄 رفع ملف كود
-                        </button>
-
-                        <button id="pasteCode">
-                            &lt;/&gt; لصق كود
-                        </button>
-
-                    </div>
-
-
-                    <div class="composer">
-
-
-                        <button
-                            class="composer-button"
-                            id="attachmentButton"
-                            title="إضافة"
-                        >
-                            +
-                        </button>
-
-
-                        <textarea
-                            id="messageInput"
-                            rows="1"
-                            maxlength="2000"
-                            placeholder="اسأل عن Lua أو Roblox Studio..."
-                            autocomplete="off"
-                            spellcheck="false"
-                        ></textarea>
-
-
-                        <div class="composer-actions">
-
-
-                            <button
-                                class="composer-tool"
-                                id="voiceButton"
-                                title="الصوت"
-                            >
-                                ◉
-                            </button>
-
-
-                            <button
-                                class="send-button"
-                                id="sendButton"
-                                title="إرسال"
-                                disabled
-                            >
-                                ↑
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="composer-info">
-
-                        <span>
-                            Lua AI يمكن أن يخطئ، تحقق من الكود قبل استخدامه.
-                        </span>
-
-
-                        <span id="characterCounter">
-                            0 / 2000
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </footer>
-
-        </main>
-
-    </div>
-
-
-    <!-- Settings -->
-
-    <div
-        class="modal-overlay hidden"
-        id="settingsModal"
-    >
-
-        <div class="modal">
-
-            <div class="modal-header">
-
-                <h2>
-                    الإعدادات
-                </h2>
-
-
-                <button
-                    class="icon-button"
-                    id="closeSettings"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <div class="settings-content">
-
-
-                <div class="setting-item">
 
                     <div>
-
-                        <strong>
-                            المظهر
+                        <strong id="modelName">
+                            AI_Lua_roblox
                         </strong>
 
                         <small>
-                            اختر مظهر الموقع
+                            Roblox & Luau
                         </small>
-
                     </div>
 
+                    <span>⌄</span>
 
-                    <select id="themeSelect">
+                </button>
 
-                        <option value="dark">
-                            داكن
-                        </option>
+                <div class="model-menu hidden" id="modelMenu">
 
-                        <option value="light">
-                            فاتح
-                        </option>
+                    <button class="model-option active"
+                            data-model="lua">
 
-                    </select>
+                        <b>AI_Lua_roblox</b>
+                        <small>متخصص في Roblox وLuau</small>
 
-                </div>
+                    </button>
 
+                    <button class="model-option"
+                            data-model="general">
 
-                <div class="setting-item">
+                        <b>General AI</b>
+                        <small>مساعد ذكاء اصطناعي عام</small>
 
-                    <div>
-
-                        <strong>
-                            اللغة
-                        </strong>
-
-                        <small>
-                            لغة واجهة الموقع
-                        </small>
-
-                    </div>
-
-
-                    <select id="languageSelect">
-
-                        <option value="ar">
-                            العربية
-                        </option>
-
-                        <option value="en">
-                            English
-                        </option>
-
-                    </select>
+                    </button>
 
                 </div>
 
             </div>
+
+            <div class="top-actions">
+
+                <button id="shareButton">↗</button>
+
+                <button id="moreButton">•••</button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CHAT -->
+        <section class="chat" id="chatContainer">
+
+            <div class="welcome" id="welcomeScreen">
+
+                <div class="hero-logo">
+                    <img src="/logo.png" alt="AI_Lua_roblox">
+                </div>
+
+                <div class="online">
+                    <i></i>
+                    AI_Lua_roblox جاهز
+                </div>
+
+                <h1>
+                    وش تبي <span>نبني</span> اليوم؟
+                </h1>
+
+                <p>
+                    مساعدك الذكي المتخصص في
+                    <b>Roblox Studio وLuau</b>
+                </p>
+
+                <div class="quick-grid">
+
+                    <button class="quick-card"
+                        data-prompt="ابنِ لي نظام RemoteEvent آمن ومحترف في Roblox Studio مع جميع الملفات ووضح مكان كل ملف.">
+
+                        <span>🛡️</span>
+                        <div>
+                            <b>حماية قوية</b>
+                            <small>أنظمة سيرفر آمنة</small>
+                        </div>
+
+                    </button>
+
+                    <button class="quick-card"
+                        data-prompt="علمني Luau في Roblox Studio من الصفر إلى مستوى متقدم بطريقة عملية.">
+
+                        <span>📚</span>
+                        <div>
+                            <b>تعلم Luau</b>
+                            <small>من الصفر للاحتراف</small>
+                        </div>
+
+                    </button>
+
+                    <button class="quick-card"
+                        data-prompt="راجع كود Roblox هذا وابحث عن الأخطاء والمشاكل الأمنية وحسنه بالكامل.">
+
+                        <span>🔎</span>
+                        <div>
+                            <b>تحليل الكود</b>
+                            <small>Debug + Security</small>
+                        </div>
+
+                    </button>
+
+                    <button class="quick-card"
+                        data-prompt="صمم لي نظام Roblox كامل واحترافي مع ترتيب الملفات والسكريبتات والكود الكامل.">
+
+                        <span>⚡</span>
+                        <div>
+                            <b>بناء مشروع</b>
+                            <small>نظام كامل</small>
+                        </div>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="messages" id="messages"></div>
+
+
+            <!-- TYPING -->
+            <div class="typing hidden" id="typingContainer">
+
+                <div class="typing-avatar">
+                    <img src="/logo.png" alt="">
+                </div>
+
+                <div class="typing-body">
+
+                    <b>AI_Lua_roblox</b>
+
+                    <div class="typing-line">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- COMPOSER -->
+        <footer class="composer-area">
+
+            <div class="composer-wrap">
+
+                <div class="attach-menu hidden"
+                     id="attachmentMenu">
+
+                    <button id="uploadCode">
+                        📄 رفع ملف
+                    </button>
+
+                    <button id="pasteCode">
+                        &lt;/&gt; لصق كود
+                    </button>
+
+                </div>
+
+
+                <div class="composer">
+
+                    <button
+                        class="attach"
+                        id="attachmentButton">
+                        ＋
+                    </button>
+
+                    <textarea
+                        id="messageInput"
+                        maxlength="3000"
+                        rows="1"
+                        placeholder="اكتب رسالتك لـ AI_Lua_roblox..."
+                        autocomplete="off"
+                        spellcheck="false"></textarea>
+
+                    <button
+                        class="send"
+                        id="sendButton"
+                        disabled>
+                        ↑
+                    </button>
+
+                </div>
+
+
+                <div class="composer-bottom">
+
+                    <span>
+                        AI يمكن أن يخطئ، تحقق من الكود قبل استخدامه.
+                    </span>
+
+                    <span id="characterCounter">
+                        0 / 3000
+                    </span>
+
+                </div>
+
+            </div>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- SETTINGS -->
+<div class="modal hidden" id="settingsModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2>الإعدادات</h2>
+
+            <button id="closeSettings">×</button>
+
+        </div>
+
+        <div class="setting">
+
+            <div>
+                <b>المظهر</b>
+                <small>تغيير مظهر الموقع</small>
+            </div>
+
+            <select id="themeSelect">
+                <option value="dark">داكن</option>
+                <option value="light">فاتح</option>
+            </select>
 
         </div>
 
     </div>
 
-
-    <!-- Hidden file input -->
-
-    <input
-        type="file"
-        id="fileInput"
-        hidden
-        accept=".lua,.luau,.txt,.js,.json,.md"
-    >
+</div>
 
 
-    <script src="/app.js"></script>
+<input
+    type="file"
+    id="fileInput"
+    hidden
+    accept=".lua,.luau,.txt,.js,.json,.md">
+
+
+<script src="/app.js"></script>
 
 </body>
-
 </html>
