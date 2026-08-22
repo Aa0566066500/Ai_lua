@@ -1,16 +1,12 @@
 {
-  "name": "roblox-lua-ai",
+  "name": "ai-lua-roblox",
   "version": "1.0.0",
-  "description": "Professional AI assistant specialized in Roblox Studio and Luau",
+  "description": "AI Lua Roblox Assistant",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "dotenv": "^16.6.1",
     "express": "^5.1.0"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }
